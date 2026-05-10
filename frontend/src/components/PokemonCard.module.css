@@ -1,0 +1,256 @@
+.card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 20px;
+    text-align: center;
+    transition: var(--transition);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+}
+
+.card:hover {
+    transform: translateY(-8px);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), 0 0 20px var(--glow-color, rgba(255, 255, 255, 0.1));
+}
+
+.idBadge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    color: var(--text-secondary);
+    font-family: var(--font-geist-mono);
+    font-weight: 500;
+    font-size: 0.91rem;
+    opacity: 0.4;
+}
+
+.imageContainer {
+    width: 150px;
+    height: 150px;
+    position: relative;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.card:hover .image {
+    transform: scale(1.15) rotate(5deg);
+}
+
+.name {
+    font-size: 1.42rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 12px;
+    text-transform: capitalize;
+    letter-spacing: -0.5px;
+}
+
+.typesContainer {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.typeBadge {
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+}
+
+.card[data-type="fire"] .typeBadge {
+    color: #ff9d55;
+    border-color: #ff9d55;
+}
+
+.card[data-type="water"] .typeBadge {
+    color: #5090d6;
+    border-color: #5090d6;
+}
+
+.card[data-type="grass"] .typeBadge {
+    color: #63bc5a;
+    border-color: #63bc5a;
+}
+
+.card[data-type="electric"] .typeBadge {
+    color: #f4d23c;
+    border-color: #f4d23c;
+}
+
+.card[data-type="psychic"] .typeBadge {
+    color: #fa7179;
+    border-color: #fa7179;
+}
+
+.card[data-type="ice"] .typeBadge {
+    color: #73cebf;
+    border-color: #73cebf;
+}
+
+.card[data-type="dragon"] .typeBadge {
+    color: #0b6dc3;
+    border-color: #0b6dc3;
+}
+
+.card[data-type="dark"] .typeBadge {
+    color: #5a5366;
+    border-color: #5a5366;
+}
+
+.card[data-type="fairy"] .typeBadge {
+    color: #ec8fe6;
+    border-color: #ec8fe6;
+}
+
+.card[data-type="normal"] .typeBadge {
+    color: #919aa2;
+    border-color: #919aa2;
+}
+
+.card[data-type="fighting"] .typeBadge {
+    color: #ce4069;
+    border-color: #ce4069;
+}
+
+.card[data-type="flying"] .typeBadge {
+    color: #89aae3;
+    border-color: #89aae3;
+}
+
+.card[data-type="poison"] .typeBadge {
+    color: #b763cf;
+    border-color: #b763cf;
+}
+
+.card[data-type="ground"] .typeBadge {
+    color: #d97746;
+    border-color: #d97746;
+}
+
+.card[data-type="rock"] .typeBadge {
+    color: #c5b679;
+    border-color: #c5b679;
+}
+
+.card[data-type="bug"] .typeBadge {
+    color: #91c12f;
+    border-color: #91c12f;
+}
+
+.card[data-type="ghost"] .typeBadge {
+    color: #5269ac;
+    border-color: #5269ac;
+}
+
+.card[data-type="steel"] .typeBadge {
+    color: #5a8ea1;
+    border-color: #5a8ea1;
+}
+
+.card[data-type="fire"] {
+    --glow-color: rgba(255, 157, 85, 0.3);
+}
+
+.card[data-type="water"] {
+    --glow-color: rgba(80, 144, 214, 0.3);
+}
+
+.card[data-type="grass"] {
+    --glow-color: rgba(99, 188, 90, 0.3);
+}
+
+.card[data-type="electric"] {
+    --glow-color: rgba(244, 210, 60, 0.3);
+}
+
+.card[data-type="psychic"] {
+    --glow-color: rgba(250, 113, 121, 0.3);
+}
+
+.card[data-type="ice"] {
+    --glow-color: rgba(115, 206, 191, 0.3);
+}
+
+.card[data-type="dragon"] {
+    --glow-color: rgba(11, 109, 195, 0.3);
+}
+
+.card[data-type="dark"] {
+    --glow-color: rgba(90, 83, 102, 0.3);
+}
+
+.card[data-type="fairy"] {
+    --glow-color: rgba(236, 143, 230, 0.3);
+}
+
+.card[data-type="normal"] {
+    --glow-color: rgba(145, 154, 162, 0.3);
+}
+
+.card[data-type="fighting"] {
+    --glow-color: rgba(206, 64, 105, 0.3);
+}
+
+.card[data-type="flying"] {
+    --glow-color: rgba(137, 170, 227, 0.3);
+}
+
+.card[data-type="poison"] {
+    --glow-color: rgba(183, 99, 207, 0.3);
+}
+
+.card[data-type="ground"] {
+    --glow-color: rgba(217, 119, 70, 0.3);
+}
+
+.card[data-type="rock"] {
+    --glow-color: rgba(197, 182, 121, 0.3);
+}
+
+.card[data-type="bug"] {
+    --glow-color: rgba(145, 193, 47, 0.3);
+}
+
+.card[data-type="ghost"] {
+    --glow-color: rgba(82, 105, 172, 0.3);
+}
+
+.card[data-type="steel"] {
+    --glow-color: rgba(90, 142, 161, 0.3);
+}
+
+.card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
+    z-index: -1;
+}

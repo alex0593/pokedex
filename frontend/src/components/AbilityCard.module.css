@@ -1,0 +1,81 @@
+.card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 20px;
+    transition: var(--transition);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    --glow-color: rgba(168, 85, 247, 0.3);
+}
+
+.card:hover {
+    transform: translateY(-8px);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), 0 0 20px var(--glow-color);
+}
+
+.idBadge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    color: var(--text-secondary);
+    font-family: var(--font-geist-mono);
+    font-weight: 500;
+    font-size: 0.91rem;
+    opacity: 0.4;
+}
+
+.name {
+    font-size: 1.42rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 12px;
+    text-transform: capitalize;
+    letter-spacing: -0.5px;
+    margin-top: 10px;
+}
+
+.effect {
+    font-size: 0.86rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin: 0 0 15px 0;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--glass-border);
+    padding-top: 10px;
+    margin-top: auto;
+}
+
+.badge {
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.71rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+}
+
+.mainSeries {
+    color: var(--accent-color);
+    font-size: 0.76rem;
+    font-weight: 700;
+}
