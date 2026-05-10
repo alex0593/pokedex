@@ -1,13 +1,6 @@
 import { PokemonSummary, PokemonDetail } from '../types/pokemon';
-
-const BASE_URL = 'http://localhost:8000';
-
-// In-memory cache for the frontend session
-const cache = {
-    pokemons: new Map<string, PokemonSummary[]>(), // queryKey -> data
-    details: new Map<string | number, PokemonDetail>(),
-    types: null as string[] | null,
-};
+import { apiClient } from '../lib/apiClient';
+import { pokemonCache, catalogCache } from '../lib/cache';
 
 export async function fetchPokemons(
     limit: number = 25,
@@ -22,87 +15,66 @@ export async function fetchPokemons(
     types.forEach(type => query.append('types', type));
 
     const cacheKey = query.toString();
-    if (cache.pokemons.has(cacheKey)) return cache.pokemons.get(cacheKey);
+    const cached = catalogCache.get(cacheKey) as PokemonSummary[] | undefined;
+    if (cached) return cached;
 
-    const url = `${BASE_URL}/pokemon/?${cacheKey}`;
-    const response = await fetch(url);
-    if (!response.ok) throw new Error('Failed to fetch pokemons');
-
-    const data = await response.json();
+    const data = await apiClient<any>(`/pokemon/?${cacheKey}`);
     const rawResults = Array.isArray(data) ? data : (data.results || []);
 
     if (rawResults.length === 0) return [];
 
-    let finalResults = rawResults;
-    if (!rawResults[0].image) {
+    let finalResults: PokemonSummary[] = rawResults;
+    if (rawResults.length > 0 && !rawResults[0].image) {
         const names = rawResults.map((p: unknown) => (p as Record<string, unknown>).name as string);
         finalResults = await fetchPokemonBatchDetails(names);
     }
 
-    cache.pokemons.set(cacheKey, finalResults);
+    catalogCache.set(cacheKey, finalResults);
     return finalResults;
 }
 
 export async function fetchPokemonDetail(nameOrId: string | number): Promise<PokemonDetail> {
-    if (cache.details.has(nameOrId)) return cache.details.get(nameOrId)!;
+    const cached = pokemonCache.get(nameOrId) as PokemonDetail | undefined;
+    if (cached) return cached;
 
-    const response = await fetch(`${BASE_URL}/pokemon/${nameOrId}`);
-    if (!response.ok) throw new Error(`Failed to fetch pokemon: ${nameOrId}`);
-
-    const data = await response.json();
-    cache.details.set(nameOrId, data);
-    cache.details.set(data.id, data);
-    cache.details.set(data.name, data);
+    const data = await apiClient<PokemonDetail>(`/pokemon/${nameOrId}`);
+    pokemonCache.set(nameOrId, data);
+    pokemonCache.set(data.id, data);
+    pokemonCache.set(data.name, data);
     return data;
 }
 
 export async function fetchRandomPokemon(): Promise<PokemonDetail> {
-    const response = await fetch(`${BASE_URL}/pokemon/random`);
-    if (!response.ok) throw new Error('Failed to fetch random pokemon');
-    const data = await response.json();
-
-    // Cache the detail we just got
-    cache.details.set(data.id, data);
-    cache.details.set(data.name, data);
+    const data = await apiClient<PokemonDetail>('/pokemon/random');
+    pokemonCache.set(data.id, data);
+    pokemonCache.set(data.name, data);
     return data;
 }
 
 export async function fetchTypes(): Promise<string[]> {
-    if (cache.types) return cache.types;
+    const cached = pokemonCache.get('types') as string[] | undefined;
+    if (cached) return cached;
 
-    const response = await fetch(`${BASE_URL}/types/`);
-    if (!response.ok) throw new Error('Failed to fetch types');
-
-    const data = await response.json();
-    cache.types = data;
+    const data = await apiClient<string[]>('/types/');
+    pokemonCache.set('types', data);
     return data;
 }
 
 export async function fetchPokemonBatchDetails(names: string[]): Promise<PokemonDetail[]> {
-    // We could check cache for each name, but for simplicity we fetch the batch
-    // and then cache each individual result
     const query = new URLSearchParams();
     names.forEach(name => query.append('names', name));
 
-    const response = await fetch(`${BASE_URL}/pokemon/batch/details?${query.toString()}`);
-    if (!response.ok) throw new Error('Failed to fetch batch details');
-
-    const data = await response.json();
+    const data = await apiClient<PokemonDetail[]>(`/pokemon/batch/details?${query.toString()}`);
     data.forEach((p: PokemonDetail) => {
-        cache.details.set(p.id, p);
-        cache.details.set(p.name, p);
+        pokemonCache.set(p.id, p);
+        pokemonCache.set(p.name, p);
     });
     return data;
 }
 
-export async function fetchQuiz(): Promise<{ target: PokemonDetail, options: string[] }> {
-    const response = await fetch(`${BASE_URL}/pokemon/game/quiz`);
-    if (!response.ok) throw new Error('Failed to fetch quiz');
-    const data = await response.json();
-
-    // Cache the target pokemon detail
-    cache.details.set(data.target.id, data.target);
-    cache.details.set(data.target.name, data.target);
-
+export async function fetchQuiz(): Promise<{ target: PokemonDetail; options: string[] }> {
+    const data = await apiClient<{ target: PokemonDetail; options: string[] }>('/pokemon/game/quiz');
+    pokemonCache.set(data.target.id, data.target);
+    pokemonCache.set(data.target.name, data.target);
     return data;
 }
