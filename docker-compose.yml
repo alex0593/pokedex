@@ -1,0 +1,51 @@
+version: '3.9'
+
+services:
+  # PostgreSQL 15 — Base de datos principal
+  postgres:
+    image: postgres:15-alpine
+    container_name: pokedex-db
+    environment:
+      POSTGRES_USER: pokedex_user
+      POSTGRES_PASSWORD: pokedex_password_dev
+      POSTGRES_DB: pokedex
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pokedex_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pokedex-network
+
+  # Redis 7 — Cache y sesiones
+  redis:
+    image: redis:7-alpine
+    container_name: pokedex-cache
+    command: redis-server --appendonly yes --requirepass pokedex_redis_pass_dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pokedex-network
+
+networks:
+  pokedex-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

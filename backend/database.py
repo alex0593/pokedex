@@ -6,10 +6,13 @@ from dotenv import load_dotenv
 # Cargar variables de entorno (leerá tu archivo .env localmente)
 load_dotenv()
 
-# Obtener URL desde .env (Requiere PostgreSQL/Supabase)
+# Obtener URL desde .env (Requiere PostgreSQL local en Docker o remoto)
+# - Dev local (docker-compose):  postgresql+asyncpg://pokedex_user:pokedex_password_dev@localhost:5432/pokedex
+# - Dentro de Docker container:  postgresql+asyncpg://pokedex_user:pokedex_password_dev@postgres:5432/pokedex
+# - Producción:                  postgresql+asyncpg://user:pass@prod-host/prod_db
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 if not SQLALCHEMY_DATABASE_URL:
-    raise ValueError("WARNING: No DATABASE_URL found in .env. Se requiere conexión a Supabase.")
+    raise ValueError("ERROR: DATABASE_URL no configurado en .env. Requerido para conectar a PostgreSQL.")
 
 # Inicializar motor de base de datos asíncrono
 # Se deshabilita completamente el caché de declaraciones preparadas de asyncpg

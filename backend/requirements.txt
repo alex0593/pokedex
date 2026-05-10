@@ -18,10 +18,14 @@ httpcore==1.0.9
 h11==0.16.0
 anyio==4.12.1
 
-# Base de datos (Postgres / Supabase)
+# Base de datos (PostgreSQL local o remoto)
 SQLAlchemy==2.0.48
 asyncpg==0.31.0
 greenlet==3.3.2
+
+# Cache (Redis)
+redis==5.0.1
+aioredis==2.0.1
 
 # Auth (JWT + password hashing)
 python-jose[cryptography]==3.5.0
