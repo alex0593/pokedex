@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 
 class UserBase(BaseModel):
@@ -16,23 +16,20 @@ class StatsSchema(BaseModel):
     high_score: int
     streak: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class AchievementSchema(BaseModel):
     name: str
     description: str
     icon: str
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class UserRegionStatSchema(BaseModel):
     region_name: str
     correct_answers: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class UserProfile(UserBase):
     id: int
@@ -41,8 +38,7 @@ class UserProfile(UserBase):
     region_stats: List[UserRegionStatSchema] = []
     achievements: List[AchievementSchema] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class Token(BaseModel):
     access_token: str

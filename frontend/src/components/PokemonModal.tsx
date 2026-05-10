@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { PokemonDetail } from '../types/pokemon';
 import styles from './PokemonModal.module.css';
 import { translate } from '../utils/translations';
@@ -17,10 +18,12 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({ pokemon, onClose }) 
                 <button className={styles.closeBtn} onClick={onClose}>&times;</button>
 
                 <div className={styles.leftCol}>
-                    <img
+                    <Image
                         src={pokemon.sprites.official_artwork || pokemon.image}
                         alt={pokemon.name}
                         className={styles.pokemonImage}
+                        width={200}
+                        height={200}
                     />
                     <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
                         {pokemon.types.map(type => (

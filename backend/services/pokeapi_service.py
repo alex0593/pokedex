@@ -1,10 +1,11 @@
 import httpx
 import asyncio
+import logging
 from typing import List, Dict, Any, Optional
 import random
 import json
-import os
-import os
+
+logger = logging.getLogger(__name__)
 
 class PokeAPIService:
     BASE_URL = "https://pokeapi.co/api/v2"
@@ -91,8 +92,8 @@ class PokeAPIService:
         try:
             pokemon_data, species_data = await asyncio.gather(pokemon_task, species_task)
             return cls._transform_pokemon_data(pokemon_data, species_data)
-        except Exception as e:
-            print(f"Aviso: Fallo en species_data para {key}: {e}")
+        except (httpx.HTTPError, httpx.TimeoutException, ValueError) as e:
+            logger.warning(f"Could not fetch species data for {key}: {e}, using pokemon data only")
             pokemon_data = await pokemon_task
             return cls._transform_pokemon_data(pokemon_data)
 
@@ -213,8 +214,9 @@ class PokeAPIService:
                             species_name = entry.get("pokemon_species", {}).get("name")
                             if species_name:
                                 pool.append({"name": species_name})
-            except BaseException:
-                 pass # Fallback to standard if region not found
+            except (httpx.HTTPError, httpx.TimeoutException, ValueError) as e:
+                logger.warning(f"Could not fetch region data for {region_name}: {e}")
+                pass
                  
         # 2. Filter by Type if provided (and intersect if Region is also provided)
         if type_name:
@@ -227,8 +229,9 @@ class PokeAPIService:
                     pool = [p for p in type_pool if p["name"] in region_names]
                 else: # Only type filter
                     pool = type_pool
-            except BaseException:
-                pass # Fallback
+            except (httpx.HTTPError, httpx.TimeoutException, ValueError) as e:
+                logger.warning(f"Could not fetch type data for {type_name}: {e}")
+                pass
  
         # 3. Default Pool if no filters applied or if intersection resulted in too few pokemon
         if len(pool) < 4:

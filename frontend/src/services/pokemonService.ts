@@ -4,7 +4,7 @@ const BASE_URL = 'http://localhost:8000';
 
 // In-memory cache for the frontend session
 const cache = {
-    pokemons: new Map<string, any>(), // queryKey -> data
+    pokemons: new Map<string, PokemonSummary[]>(), // queryKey -> data
     details: new Map<string | number, PokemonDetail>(),
     types: null as string[] | null,
 };
@@ -35,7 +35,7 @@ export async function fetchPokemons(
 
     let finalResults = rawResults;
     if (!rawResults[0].image) {
-        const names = rawResults.map((p: any) => p.name);
+        const names = rawResults.map((p: unknown) => (p as Record<string, unknown>).name as string);
         finalResults = await fetchPokemonBatchDetails(names);
     }
 

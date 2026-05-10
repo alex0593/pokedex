@@ -20,9 +20,10 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ username }) =>
             try {
                 const data = await getProfile(username);
                 setProfile(data);
-            } catch (e: any) {
+            } catch (e: unknown) {
                 console.error(e);
-                setError(e.message || "Error al cargar el perfil");
+                const message = e instanceof Error ? e.message : String(e);
+                setError(message || "Error al cargar el perfil");
             } finally {
                 setLoading(false);
             }

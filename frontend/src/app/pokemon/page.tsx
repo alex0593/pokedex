@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   fetchPokemons,
   fetchPokemonDetail,
@@ -11,9 +11,7 @@ import { getLoggedUser, logout } from '../../services/authService';
 import { PokemonSummary, PokemonDetail } from '../../types/pokemon';
 import { PokemonCard } from '../../components/PokemonCard';
 import { PokemonModal } from '../../components/PokemonModal';
-import { WhoIsThatPokemon } from '../../components/WhoIsThatPokemon';
 import { AuthModal } from '../../components/AuthModal';
-import { UserProfileView } from '../../components/UserProfileView';
 import styles from './page.module.css';
 import { MiniNav } from '../../components/MiniNav';
 import { Skeleton } from '../../components/Skeleton';
@@ -82,7 +80,7 @@ export default function Pokedex() {
     setSearchTerm('');
   };
 
-  const loadMore = async () => {
+  const loadMore = useCallback(async () => {
     if (loadingMore) return;
     setLoadingMore(true);
     const nextOffset = offset + LIMIT;
@@ -95,7 +93,7 @@ export default function Pokedex() {
     } finally {
       setLoadingMore(false);
     }
-  };
+  }, [offset, loadingMore, searchTerm, selectedTypes]);
 
   const openDetail = async (id: string | number) => {
     try {
@@ -124,7 +122,7 @@ export default function Pokedex() {
     if (target) observer.observe(target);
 
     return () => observer.disconnect();
-  }, [loading, loadingMore, offset]);
+  }, [loading, loadingMore, loadMore]);
 
   const handleLogout = () => {
     logout();

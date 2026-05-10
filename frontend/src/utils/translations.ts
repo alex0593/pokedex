@@ -112,10 +112,22 @@ export function translate(key: string, category: string): string {
     return key.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
-export function getSpanishEffect(entries: any[]): string {
+interface EffectEntry {
+    language: { name: string };
+    effect?: string;
+    short_effect?: string;
+}
+
+export function getSpanishEffect(entries: EffectEntry[] | unknown): string {
     if (!Array.isArray(entries)) return 'Descripción no disponible.';
-    const esEntry = entries.find(e => e.language.name === 'es');
-    if (esEntry) return esEntry.effect || esEntry.short_effect || 'Descripción no disponible.';
-    const enEntry = entries.find(e => e.language.name === 'en');
-    return enEntry ? (enEntry.effect || enEntry.short_effect || 'Descripción no disponible.') : 'Descripción no disponible.';
+    const esEntry = entries.find((e: unknown) => {
+        const entry = e as EffectEntry;
+        return entry.language?.name === 'es';
+    });
+    if (esEntry) return (esEntry as EffectEntry).effect || (esEntry as EffectEntry).short_effect || 'Descripción no disponible.';
+    const enEntry = entries.find((e: unknown) => {
+        const entry = e as EffectEntry;
+        return entry.language?.name === 'en';
+    });
+    return enEntry ? ((enEntry as EffectEntry).effect || (enEntry as EffectEntry).short_effect || 'Descripción no disponible.') : 'Descripción no disponible.';
 }

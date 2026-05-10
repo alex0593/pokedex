@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect, useCallback } from 'react';
 import { fetchBerries } from '../../services/catalogService';
 import { BerryDetail } from '../../types/catalog';
 import { BerryCard } from '../../components/BerryCard';
@@ -36,7 +35,7 @@ export default function BerriesCatalog() {
     getInitialBerries();
   }, []);
 
-  const loadMore = async () => {
+  const loadMore = useCallback(async () => {
     if (loadingMore) return;
     setLoadingMore(true);
     const nextOffset = offset + LIMIT;
@@ -49,7 +48,7 @@ export default function BerriesCatalog() {
     } finally {
       setLoadingMore(false);
     }
-  };
+  }, [offset, loadingMore]);
 
   // INFINITE SCROLL OBSERVER
   useEffect(() => {
@@ -67,7 +66,7 @@ export default function BerriesCatalog() {
     if (target) observer.observe(target);
 
     return () => observer.disconnect();
-  }, [loading, loadingMore, offset]);
+  }, [loading, loadingMore, loadMore]);
 
   const openModal = (name: string) => {
     const berry = berries.find(b => b.name === name);

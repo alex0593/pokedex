@@ -32,8 +32,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess }) => {
                 onSuccess(username);
             }
             onClose();
-        } catch (err: any) {
-            setError(err.message || 'Ocurrió un error');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : String(err);
+            setError(message || 'Ocurrió un error');
         } finally {
             setLoading(false);
         }

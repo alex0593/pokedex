@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=65.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pokedex-backend"
+version = "2.2.1"
+description = "Backend for POKEDEX API"
+requires-python = ">=3.14"
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort (import sorting)
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+]
+ignore = [
+    "E501",  # line too long (handled by line-length)
+    "E701",  # multiple statements on one line
+]
+
+[tool.ruff.isort]
+known-first-party = ["services", "routers", "models", "database", "utils"]

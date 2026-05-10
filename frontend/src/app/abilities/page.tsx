@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect, useCallback } from 'react';
 import { fetchAbilities } from '../../services/catalogService';
 import { AbilityDetail } from '../../types/catalog';
 import { AbilityCard } from '../../components/AbilityCard';
@@ -36,7 +35,7 @@ export default function AbilitiesCatalog() {
     getInitialAbilities();
   }, []);
 
-  const loadMore = async () => {
+  const loadMore = useCallback(async () => {
     if (loadingMore) return;
     setLoadingMore(true);
     const nextOffset = offset + LIMIT;
@@ -49,7 +48,7 @@ export default function AbilitiesCatalog() {
     } finally {
       setLoadingMore(false);
     }
-  };
+  }, [offset, loadingMore]);
 
   // INFINITE SCROLL OBSERVER
   useEffect(() => {
@@ -67,7 +66,7 @@ export default function AbilitiesCatalog() {
     if (target) observer.observe(target);
 
     return () => observer.disconnect();
-  }, [loading, loadingMore, offset]);
+  }, [loading, loadingMore, loadMore]);
 
   const openModal = (name: string) => {
     const ability = abilities.find(a => a.name === name);

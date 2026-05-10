@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { fetchQuiz } from '../services/pokemonService';
 import { saveGameResult, getLoggedUser } from '../services/authService';
 import { PokemonDetail } from '../types/pokemon';
@@ -217,11 +218,13 @@ export const WhoIsThatPokemon: React.FC = () => {
                     revealed && isCorrectAnswer ? styles.successGlow : '',
                 ].filter(Boolean).join(' ')}>
                     {quiz && (
-                        <img
+                        <Image
                             key={quiz.target.id}
                             src={quiz.target.image}
                             alt="Pokemon Misterioso"
                             className={styles.mysteryImage}
+                            width={220}
+                            height={220}
                         />
                     )}
                     <div className={styles.bgCircle} />

@@ -9,13 +9,9 @@ import { MiniNav } from '../../components/MiniNav';
 import styles from './page.module.css';
 
 export default function GamePage() {
-  const [user, setUser] = useState<string | null>(null);
+  const [user, setUser] = useState<string | null>(() => getLoggedUser());
   const [showAuth, setShowAuth] = useState(false);
   const [view, setView] = useState<'game' | 'profile'>('game');
-
-  useEffect(() => {
-    setUser(getLoggedUser());
-  }, []);
 
   const handleLogout = () => {
     logout();

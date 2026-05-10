@@ -3,7 +3,10 @@ from typing import List, Optional, Dict, Any
 import httpx
 import asyncio
 import random
+import logging
 from services.pokeapi_service import PokeAPIService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/pokemon",
@@ -80,10 +83,12 @@ async def list_pokemon(
         # Default case: standard pagination
         return await PokeAPIService.get_pokemon_list(limit, offset)
     except httpx.HTTPStatusError as e:
+        logger.error(f"HTTP error fetching pokemon: {e}", exc_info=True)
         if e.response.status_code == 404:
             raise HTTPException(status_code=404, detail="Uno o más tipos especificados no fueron encontrados.")
         raise HTTPException(status_code=500, detail=f"Error de la API externa: {str(e)}")
-    except Exception as e:
+    except (httpx.TimeoutException, httpx.HTTPError, ValueError) as e:
+        logger.error(f"Error fetching pokemon: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error al procesar los filtros: {str(e)}")
 
 @router.get("/random")
@@ -93,7 +98,8 @@ async def get_random_pokemon():
     """
     try:
         return await PokeAPIService.get_random_pokemon()
-    except Exception:
+    except (httpx.HTTPError, httpx.TimeoutException, ValueError) as e:
+        logger.error(f"Error fetching random pokemon: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error al obtener un Pokémon aleatorio")
 
 @router.get("/game/quiz")
@@ -103,7 +109,8 @@ async def get_quiz():
     """
     try:
         return await PokeAPIService.get_optimized_quiz()
-    except Exception as e:
+    except (httpx.HTTPError, httpx.TimeoutException, ValueError) as e:
+        logger.error(f"Error generating quiz: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error generating quiz: {str(e)}")
 
 @router.get("/batch/details")
@@ -134,8 +141,6 @@ async def get_pokemon_detail(name_or_id: str):
     """
     try:
         return await PokeAPIService.get_pokemon_by_name_or_id(name_or_id)
-    except Exception as e:
-        print(f"Error en get_pokemon_detail para {name_or_id}: {e}")
-        import traceback
-        traceback.print_exc()
+    except (httpx.HTTPError, httpx.TimeoutException, ValueError) as e:
+        logger.error(f"Error fetching pokemon detail for {name_or_id}: {e}", exc_info=True)
         raise HTTPException(status_code=404, detail="Pokémon no encontrado")

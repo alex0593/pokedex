@@ -8,7 +8,7 @@ const cache = {
     berries: new Map<string, BerryDetail>(),
     abilities: new Map<string, AbilityDetail>(),
     moves: new Map<string, MoveDetail>(),
-    lists: new Map<string, any[]>(), // url -> results
+    lists: new Map<string, (ItemDetail | BerryDetail | AbilityDetail | MoveDetail)[]>(), // url -> results
 };
 
 export async function fetchItems(limit: number = 25, offset: number = 0): Promise<ItemDetail[]> {
@@ -22,12 +22,14 @@ export async function fetchItems(limit: number = 25, offset: number = 0): Promis
     const rawResults = Array.isArray(data) ? data : (data.results || []);
     
     const finalResults = await Promise.all(
-        rawResults.map(async (item: any) => {
-            if (item.sprites) {
-                cache.items.set(item.name, item);
-                return item as ItemDetail;
+        rawResults.map(async (item: unknown) => {
+            const itemObj = item as Record<string, unknown>;
+            if (itemObj.sprites) {
+                const detail = item as ItemDetail;
+                cache.items.set(detail.name, detail);
+                return detail;
             }
-            return await fetchItemDetail(item.name);
+            return await fetchItemDetail(itemObj.name as string);
         })
     );
     
@@ -82,12 +84,14 @@ export async function fetchBerries(limit: number = 25, offset: number = 0): Prom
     const rawResults = Array.isArray(data) ? data : (data.results || []);
     
     const finalResults = await Promise.all(
-        rawResults.map(async (berry: any) => {
-            if (berry.firmness) {
-                cache.berries.set(berry.name, berry);
-                return berry as BerryDetail;
+        rawResults.map(async (berry: unknown) => {
+            const berryObj = berry as Record<string, unknown>;
+            if (berryObj.firmness) {
+                const detail = berry as BerryDetail;
+                cache.berries.set(detail.name, detail);
+                return detail;
             }
-            return await fetchBerryDetail(berry.name);
+            return await fetchBerryDetail(berryObj.name as string);
         })
     );
     
@@ -147,12 +151,14 @@ export async function fetchAbilities(limit: number = 25, offset: number = 0): Pr
     const rawResults = Array.isArray(data) ? data : (data.results || []);
     
     const finalResults = await Promise.all(
-        rawResults.map(async (ability: any) => {
-            if (ability.effect_entries && ability.pokemon) {
-                cache.abilities.set(ability.name, ability);
-                return ability as AbilityDetail;
+        rawResults.map(async (ability: unknown) => {
+            const abilityObj = ability as Record<string, unknown>;
+            if (abilityObj.effect_entries && abilityObj.pokemon) {
+                const detail = ability as AbilityDetail;
+                cache.abilities.set(detail.name, detail);
+                return detail;
             }
-            return await fetchAbilityDetail(ability.name);
+            return await fetchAbilityDetail(abilityObj.name as string);
         })
     );
     
@@ -180,10 +186,13 @@ export async function fetchAbilityDetail(name: string): Promise<AbilityDetail> {
 
     // Map simple pokemon list to the expected structure
     if (data.pokemon && Array.isArray(data.pokemon) && data.pokemon.length > 0 && !data.pokemon[0].pokemon) {
-        data.pokemon = data.pokemon.map((p: any) => ({
-            pokemon: { name: p.name, url: p.url || '' },
-            is_hidden: !!p.is_hidden
-        }));
+        data.pokemon = data.pokemon.map((p: unknown) => {
+            const pObj = p as Record<string, unknown>;
+            return {
+                pokemon: { name: pObj.name as string, url: (pObj.url as string) || '' },
+                is_hidden: !!pObj.is_hidden
+            };
+        });
     }
     
     cache.abilities.set(name, data);
@@ -200,12 +209,14 @@ export async function fetchMoves(limit: number = 25, offset: number = 0): Promis
     const rawResults = Array.isArray(data) ? data : (data.results || []);
     
     const finalResults = await Promise.all(
-        rawResults.map(async (move: any) => {
-            if (move.power !== undefined) {
-                cache.moves.set(move.name, move);
-                return move as MoveDetail;
+        rawResults.map(async (move: unknown) => {
+            const moveObj = move as Record<string, unknown>;
+            if (moveObj.power !== undefined) {
+                const detail = move as MoveDetail;
+                cache.moves.set(detail.name, detail);
+                return detail;
             }
-            return await fetchMoveDetail(move.name);
+            return await fetchMoveDetail(moveObj.name as string);
         })
     );
     

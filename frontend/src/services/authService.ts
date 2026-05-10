@@ -42,8 +42,9 @@ export async function login(username: string, password: string): Promise<string>
         localStorage.setItem('poke_token', data.access_token);
         localStorage.setItem('poke_user', username);
         return data.access_token;
-    } catch (error: any) {
-        if (error.message === 'Failed to fetch') {
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (message === 'Failed to fetch') {
             throw new Error('No se pudo conectar con el servidor. ¿Está el backend encendido?');
         }
         throw error;
@@ -64,8 +65,9 @@ export async function register(username: string, password: string): Promise<User
         }
 
         return await response.json();
-    } catch (error: any) {
-        if (error.message === 'Failed to fetch') {
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (message === 'Failed to fetch') {
             throw new Error('Error de conexión al registrar. Verifica tu conexión o el estado del servidor.');
         }
         throw error;
@@ -80,9 +82,10 @@ export async function getProfile(username: string): Promise<UserProfile> {
             throw new Error(errorData.detail || `Error del servidor: ${response.status}`);
         }
         return await response.json();
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Profile fetch error:", error);
-        if (error.message === 'Failed to fetch') {
+        const message = error instanceof Error ? error.message : String(error);
+        if (message === 'Failed to fetch') {
             throw new Error('No se pudo cargar el perfil: El servidor no responde (localhost:8000).');
         }
         throw error;
