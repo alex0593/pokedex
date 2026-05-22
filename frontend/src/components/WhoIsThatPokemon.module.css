@@ -217,7 +217,7 @@
 .timerBar {
     height: 100%;
     background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-    transition: width 0.1s linear;
+    transition: width 0.1s linear, background 0.3s ease;
 }
 
 .loading {
@@ -243,4 +243,14 @@
     to {
         transform: rotate(360deg);
     }
+}
+
+/* Timer de urgencia: pulsa cuando quedan ≤ 3 s */
+.timerUrgent {
+    animation: timerPulse 0.5s ease-in-out infinite;
+}
+
+@keyframes timerPulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.5; }
 }

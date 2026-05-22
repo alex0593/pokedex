@@ -1,53 +1,88 @@
-# 🔴 POKEDEX — Full Stack (FastAPI + Next.js)
+# POKEDEX PRO MAX — El Hub Pokémon Definitivo
 
-**Versión:** 2.2.1 | **Estado:** En desarrollo camino a producción
+Aplicación fullstack completa para explorar la Pokédex oficial, objetos, bayas, habilidades, movimientos y participar en mini-juegos interactivos de trivia.
 
-Pokédex moderna con backend FastAPI + Supabase (PostgreSQL) y frontend Next.js 16 con React 19. Sistema de autenticación JWT, perfil de usuario, logros y mapas regionales interactivos.
+**Versión:** 2.2.1 | **Estado:** Production-ready (Bloques 1-8 completados)
 
-## 📋 Estructura Monorepo
+## 🚀 Quick Start (5 minutos)
 
-```
-POKEDEX/
-├── backend/          # FastAPI + asyncio + SQLAlchemy (PostgreSQL)
-│   ├── routers/      # pokemon, abilities, moves, items, berries, evolutions, locations, stats, user, types
-│   ├── services/     # pokeapi_service.py (HTTP async a PokeAPI)
-│   ├── models/       # Schemas Pydantic + ORM SQLAlchemy
-│   ├── utils/        # auth_utils.py (JWT, password hashing)
-│   ├── database.py   # Conexión PostgreSQL async
-│   ├── main.py       # FastAPI app + CORS middleware
-│   ├── requirements.txt  # (pinned versions)
-│   └── .env.example  # Template de variables
-│
-├── frontend/         # Next.js 16 (App Router) + React 19 + TypeScript
-│   ├── src/
-│   │   ├── app/      # Rutas: pokemon, items, berries, abilities, moves, game
-│   │   ├── components/  # Cards, Modales, Navegación
-│   │   ├── services/ # pokemonService.ts, catalogService.ts, authService.ts
-│   │   ├── types/    # Interfaces TypeScript
-│   │   └── utils/    # translations.ts
-│   ├── package.json
-│   ├── eslint.config.mjs
-│   ├── next.config.ts
-│   └── .env.example  # Template de variables
-│
-├── .gitignore        # Comprensivo (venv/, node_modules/, .env, __pycache__, etc.)
-└── README.md         # Este archivo
-
-## 🚀 Quick Start (Dev Local con Docker)
-
-### Requisitos
-
-- Docker + Docker Compose
-- Python 3.10+ (backend local)
-- Node.js 20+ (frontend local)
-- Git
-
-### Setup (5 minutos)
-
-**1. Levanta PostgreSQL + Redis en Docker:**
+### Opción 1: Docker (Recomendado)
 
 ```bash
+git clone https://github.com/alex0593/pokedex.git
+cd pokedex
 docker compose up -d
+
+# Esperar a que los servicios sean HEALTHY
+docker compose ps
+
+# Acceder a:
+# Frontend: http://localhost:3000
+# Backend API: http://localhost:8000
+# Docs: http://localhost:8000/docs
+```
+
+### Opción 2: Desarrollo Local
+
+**Backend:**
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # venv\Scripts\activate en Windows
+pip install -r requirements.txt
+cp .env.example .env
+# Editar .env con tus valores
+uvicorn main:app --reload
+```
+
+**Frontend:**
+```bash
+cd frontend
+npm install
+cp .env.example .env
+# NEXT_PUBLIC_API_URL=http://localhost:8000
+npm run dev
+```
+
+**Servicios (solo si no usas Docker):**
+```bash
+# PostgreSQL + Redis deben estar corriendo
+docker compose up postgres redis -d
+```
+
+## 📐 Arquitectura
+
+```
+pokedex/
+├── backend/                    # FastAPI 0.135 + SQLAlchemy async
+│   ├── routers/               # 10 routers: pokemon, items, abilities, moves, berries, etc.
+│   │   └── _generic.py        # Factory para reducir duplicación (3 endpoints × 4 catálogos)
+│   ├── services/
+│   │   ├── pokeapi_service.py # PokeAPI wrapper + retry con backoff exponencial
+│   │   └── cache_service.py   # Redis cache con TTL
+│   ├── models/                # SQLAlchemy ORM + Pydantic v2 schemas
+│   ├── utils/                 # auth, logging_config
+│   ├── tests/                 # pytest + respx (mock PokeAPI)
+│   ├── Dockerfile             # Multistage, non-root user
+│   └── main.py                # FastAPI app + /health endpoint
+│
+├── frontend/                   # Next.js 16 + React 19 + TypeScript strict
+│   ├── src/
+│   │   ├── app/               # 6 páginas + loading.tsx, error.tsx boundaries
+│   │   ├── components/        # Cards, Modales con ARIA, MiniNav
+│   │   ├── hooks/             # useTriviaGame (extraído, memoizado)
+│   │   ├── contexts/          # AuthContext (estado global, sync multi-tab)
+│   │   ├── services/          # apiClient unificado + retry + timeout
+│   │   ├── lib/               # cache, translations
+│   │   └── types/             # Interfaces
+│   ├── tests/                 # vitest + @testing-library/react + msw
+│   ├── vitest.config.ts
+│   ├── Dockerfile             # Multistage, non-root user
+│   └── package.json           # npm test, npm run test:coverage
+│
+├── .github/workflows/ci.yml    # GitHub Actions: lint, test, build
+├── docker-compose.yml          # PostgreSQL 15 + Redis 7 + backend + frontend
+└── README.md                   # Este archivo
 # Espera que ambos contenedores estén "healthy"
 docker compose ps
 ```

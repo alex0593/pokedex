@@ -1,80 +1,61 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { WhoIsThatPokemon } from '../../components/WhoIsThatPokemon';
-import { UserProfileView } from '../../components/UserProfileView';
-import { getLoggedUser, logout } from '../../services/authService';
-import { AuthModal } from '../../components/AuthModal';
-import { MiniNav } from '../../components/MiniNav';
+import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
+import { useAuth } from '../../contexts/AuthContext';
+import { PageLayout } from '../../components/PageLayout';
 import styles from './page.module.css';
 
+const WhoIsThatPokemon = dynamic(
+  () => import('../../components/WhoIsThatPokemon').then(mod => ({ default: mod.WhoIsThatPokemon })),
+  { ssr: false },
+);
+const UserProfileView = dynamic(
+  () => import('../../components/UserProfileView').then(mod => ({ default: mod.UserProfileView })),
+  { ssr: false },
+);
+
 export default function GamePage() {
-  const [user, setUser] = useState<string | null>(() => getLoggedUser());
-  const [showAuth, setShowAuth] = useState(false);
+  const { user } = useAuth();
   const [view, setView] = useState<'game' | 'profile'>('game');
 
-  const handleLogout = () => {
-    logout();
-    setUser(null);
-    setView('game');
-  };
+  // Si el usuario cierra sesión mientras ve su perfil, volver al juego
+  React.useEffect(() => {
+    if (!user && view === 'profile') setView('game');
+  }, [user, view]);
+
+  const gameToggle = (
+    <div className={styles.gameToggle}>
+      <button
+        className={`${styles.toggleBtn} ${view === 'game' ? styles.active : ''}`}
+        onClick={() => setView('game')}
+        type="button"
+      >
+        🎮 Jugar
+      </button>
+      {user && (
+        <button
+          className={`${styles.toggleBtn} ${view === 'profile' ? styles.active : ''}`}
+          onClick={() => setView('profile')}
+          type="button"
+        >
+          🏆 Mis Logros
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <main className={styles.mainContainer}>
-      <header className={styles.header}>
-        <div className={styles.logoArea}>
-          <h1 className={styles.title}>POKEDEX PRO MAX</h1>
-          {user ? (
-            <div className={styles.userStatus}>
-              <span className={styles.userName}>Hola, {user}</span>
-              <button onClick={handleLogout} className={styles.logoutBtn}>Cerrar Sesión</button>
-            </div>
+      <PageLayout headerSlot={gameToggle}>
+        <div className={styles.gameWrapper}>
+          {view === 'profile' && user ? (
+            <UserProfileView username={user} />
           ) : (
-            <button onClick={() => setShowAuth(true)} className={styles.loginBtn}>Entrar</button>
+            <WhoIsThatPokemon />
           )}
         </div>
-        
-        <MiniNav />
-
-        <div className={styles.gameToggle}>
-          <button 
-            className={`${styles.toggleBtn} ${view === 'game' ? styles.active : ''}`}
-            onClick={() => setView('game')}
-          >
-            🎮 Jugar
-          </button>
-          {user && (
-            <button 
-              className={`${styles.toggleBtn} ${view === 'profile' ? styles.active : ''}`}
-              onClick={() => setView('profile')}
-            >
-              🏆 Mis Logros
-            </button>
-          )}
-        </div>
-      </header>
-
-      {showAuth && (
-        <AuthModal
-          onClose={() => setShowAuth(false)}
-          onSuccess={(uname) => {
-            setUser(uname);
-            setShowAuth(false);
-          }}
-        />
-      )}
-      
-      <div className={styles.gameWrapper}>
-        {view === 'profile' && user ? (
-          <UserProfileView username={user} />
-        ) : (
-          <WhoIsThatPokemon />
-        )}
-      </div>
-
-      <footer className={styles.footer}>
-        <p>&copy; 2026 POKEDEX &bull; PRO MAX</p>
-      </footer>
+      </PageLayout>
     </main>
   );
 }

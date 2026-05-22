@@ -1,0 +1,84 @@
+# =============================================================================
+# docker-compose.server.yml — Servidor de Producción
+#
+# Solo levanta el BACKEND (FastAPI + PostgreSQL + Redis).
+# El FRONTEND corre fuera de Docker, administrado por PM2 + Nginx.
+#
+# Uso:
+#   cp backend/.env.prod.example .env     # edita valores reales
+#   docker compose -f docker-compose.server.yml --env-file .env up -d --build
+# =============================================================================
+
+services:
+
+  # ── PostgreSQL 15 ───────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: pokedex-db
+    environment:
+      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB:       ${POSTGRES_DB:-pokedex}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    # Sin ports → solo accesible dentro de pokedex-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pokedex-network
+    restart: unless-stopped
+
+  # ── Redis 7 ─────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: pokedex-cache
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    # Sin ports → solo accesible dentro de pokedex-network
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pokedex-network
+    restart: unless-stopped
+
+  # ── FastAPI Backend ──────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pokedex-backend
+    ports:
+      - "127.0.0.1:8000:8000"   # Solo accesible desde localhost (Nginx en el host)
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-pokedex}
+      REDIS_URL:    redis://:${REDIS_PASSWORD}@redis:6379/0
+      SECRET_KEY:   ${SECRET_KEY}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - pokedex-network
+    restart: unless-stopped
+
+networks:
+  pokedex-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 import { PokemonDetail } from '../types/pokemon';
 import styles from './PokemonModal.module.css';
 import { translate } from '../utils/translations';
@@ -13,9 +14,26 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({ pokemon, onClose }) 
     const maxStat = 255; // Common max value for base stats
 
     return (
-        <div className={styles.overlay} onClick={onClose}>
-            <div className={styles.modal} onClick={e => e.stopPropagation()}>
-                <button className={styles.closeBtn} onClick={onClose}>&times;</button>
+        <div className={styles.overlay} onClick={onClose} role="presentation">
+            <motion.div
+                className={styles.modal}
+                onClick={e => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="pokemon-modal-title"
+                initial={{ opacity: 0, scale: 0.92, y: 30 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            >
+                <button
+                    className={styles.closeBtn}
+                    onClick={onClose}
+                    aria-label="Cerrar modal"
+                    type="button"
+                >
+                    &times;
+                </button>
 
                 <div className={styles.leftCol}>
                     <Image
@@ -37,7 +55,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({ pokemon, onClose }) 
                 <div className={styles.rightCol}>
                     <div className={styles.header}>
                         <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>#{pokemon.id.toString().padStart(3, '0')}</span>
-                        <h2 className={styles.name}>{pokemon.name}</h2>
+                        <h2 className={styles.name} id="pokemon-modal-title">{pokemon.name}</h2>
                     </div>
 
                     <div className={styles.statsSection}>
@@ -69,7 +87,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({ pokemon, onClose }) 
                         </div>
                     </div>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 };

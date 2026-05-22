@@ -26,3 +26,9 @@ ignore = [
 
 [tool.ruff.isort]
 known-first-party = ["services", "routers", "models", "database", "utils"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-v --tb=short"
+python_files = ["test_*.py"]

@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 import { BerryDetail } from '../types/catalog';
 import styles from './BerryModal.module.css';
 import { translate } from '../utils/translations';
@@ -14,9 +15,26 @@ export const BerryModal: React.FC<BerryModalProps> = ({ berry, onClose }) => {
     const imageUrl = berry.sprites?.default || '';
 
     return (
-        <div className={styles.overlay} onClick={onClose}>
-            <div className={styles.modal} onClick={e => e.stopPropagation()}>
-                <button className={styles.closeBtn} onClick={onClose}>&times;</button>
+        <div className={styles.overlay} onClick={onClose} role="presentation">
+            <motion.div
+                className={styles.modal}
+                onClick={e => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="berry-modal-title"
+                initial={{ opacity: 0, scale: 0.92, y: 30 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            >
+                <button
+                    className={styles.closeBtn}
+                    onClick={onClose}
+                    aria-label="Cerrar modal"
+                    type="button"
+                >
+                    &times;
+                </button>
 
                 <div className={styles.leftCol}>
                     {!imageError ? (
@@ -42,7 +60,7 @@ export const BerryModal: React.FC<BerryModalProps> = ({ berry, onClose }) => {
                 <div className={styles.rightCol}>
                     <div className={styles.header}>
                         <span className={styles.id}>#{berry.id?.toString().padStart(3, '0') || '???' }</span>
-                        <h2 className={styles.name}>Baya {berry.name}</h2>
+                        <h2 className={styles.name} id="berry-modal-title">Baya {berry.name}</h2>
                     </div>
 
                     <div className={styles.statsSection}>
@@ -108,7 +126,7 @@ export const BerryModal: React.FC<BerryModalProps> = ({ berry, onClose }) => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 };

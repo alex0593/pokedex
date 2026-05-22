@@ -4,8 +4,25 @@ import logging
 from typing import List, Dict, Any, Optional
 import random
 import json
+from datetime import timedelta
+from functools import wraps
 
 logger = logging.getLogger(__name__)
+
+
+async def retry_with_backoff(coro, max_retries: int = 3, base_delay: float = 0.1):
+    """Retry a coroutine with exponential backoff."""
+    for attempt in range(max_retries):
+        try:
+            return await coro
+        except (httpx.HTTPError, httpx.TimeoutException) as e:
+            if attempt == max_retries - 1:
+                logger.error(f'Max retries exceeded: {e}')
+                raise
+            delay = base_delay * (2 ** attempt)
+            logger.warning(f'Attempt {attempt + 1} failed, retrying in {delay}s: {e}')
+            await asyncio.sleep(delay)
+
 
 class PokeAPIService:
     BASE_URL = "https://pokeapi.co/api/v2"
@@ -103,21 +120,23 @@ class PokeAPIService:
         client = await cls._get_client()
         async with cls._semaphore:
             url = f"{cls.BASE_URL}/pokemon/{key}"
-            response = await client.get(url, timeout=10.0)
-            response.raise_for_status()
-            return response.json()
+            async def fetch():
+                response = await client.get(url, timeout=10.0)
+                response.raise_for_status()
+                return response.json()
+            return await retry_with_backoff(fetch())
 
     @classmethod
     async def get_pokemon_types(cls) -> List[str]:
         """Fetch all pokemon types, cached indefinitely."""
-
-        
         client = await cls._get_client()
         async with cls._semaphore:
             url = f"{cls.BASE_URL}/type"
-            response = await client.get(url)
-            response.raise_for_status()
-            data = response.json()
+            async def fetch():
+                response = await client.get(url)
+                response.raise_for_status()
+                return response.json()
+            data = await retry_with_backoff(fetch())
             return [t['name'] for t in data['results']]
 
     @classmethod
@@ -153,46 +172,42 @@ class PokeAPIService:
     @classmethod
     async def get_pokemon_species_data(cls, name_or_id: str) -> Dict[str, Any]:
         """Fetch pokemon species data for translations and flavor text."""
-
-            
         key = str(name_or_id).lower()
         client = await cls._get_client()
         async with cls._semaphore:
             url = f"{cls.BASE_URL}/pokemon-species/{key}"
-            response = await client.get(url, timeout=10.0)
-            response.raise_for_status()
-            data = response.json()
-            
-            return data
+            async def fetch():
+                response = await client.get(url, timeout=10.0)
+                response.raise_for_status()
+                return response.json()
+            return await retry_with_backoff(fetch())
 
 
 
     @classmethod
     async def get_generic_data(cls, endpoint: str, limit: int = 25, offset: int = 0) -> Dict[str, Any]:
         """Fetch a paginated list of items from a specific PokeAPI endpoint with caching."""
-
-
         client = await cls._get_client()
         async with cls._semaphore:
             url = f"{cls.BASE_URL}/{endpoint}?limit={limit}&offset={offset}"
-            response = await client.get(url, timeout=10.0)
-            response.raise_for_status()
-            data = response.json()
-            return data
+            async def fetch():
+                response = await client.get(url, timeout=10.0)
+                response.raise_for_status()
+                return response.json()
+            return await retry_with_backoff(fetch())
 
     @classmethod
     async def get_generic_detail(cls, endpoint: str, name_or_id: str) -> Dict[str, Any]:
         """Fetch detailed information of a specific item from a PokeAPI endpoint with caching."""
-
-
         lookup_id = str(name_or_id).lower()
         client = await cls._get_client()
         async with cls._semaphore:
             url = f"{cls.BASE_URL}/{endpoint}/{lookup_id}"
-            response = await client.get(url, timeout=10.0)
-            response.raise_for_status()
-            data = response.json()
-            return data
+            async def fetch():
+                response = await client.get(url, timeout=10.0)
+                response.raise_for_status()
+                return response.json()
+            return await retry_with_backoff(fetch())
 
     @classmethod
     async def get_optimized_quiz(cls, region_name: Optional[str] = None, type_name: Optional[str] = None) -> Dict[str, Any]:

@@ -1,0 +1,83 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
+import { useTriviaGame } from '../../src/hooks/useTriviaGame';
+
+vi.mock('../../src/services/pokemonService', () => ({
+  fetchQuiz: vi.fn().mockResolvedValue({
+    target: { id: 25, name: 'Pikachu', image: 'url' },
+    options: ['Pikachu', 'Raichu', 'Charmander', 'Squirtle'],
+  }),
+}));
+
+vi.mock('../../src/services/authService', () => ({
+  getLoggedUser: vi.fn().mockReturnValue(null),
+  saveGameResult: vi.fn(),
+}));
+
+describe('useTriviaGame', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllTimers();
+    vi.useFakeTimers();
+  });
+
+  it('should initialize game state', async () => {
+    const { result } = renderHook(() => useTriviaGame());
+
+    await act(async () => {
+      // Wait for async initialization
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.quiz).toBeTruthy();
+    expect(result.current.revealed).toBe(false);
+    expect(result.current.score).toBe(0);
+  });
+
+  it('should handle correct guess', async () => {
+    const { result } = renderHook(() => useTriviaGame());
+
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    await act(async () => {
+      result.current.handleGuess('Pikachu');
+    });
+
+    expect(result.current.revealed).toBe(true);
+    expect(result.current.score).toBe(1);
+    expect(result.current.message).toContain('Excelente');
+  });
+
+  it('should reset score on incorrect guess', async () => {
+    const { result } = renderHook(() => useTriviaGame());
+
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    await act(async () => {
+      result.current.handleGuess('Charmander');
+    });
+
+    expect(result.current.revealed).toBe(true);
+    expect(result.current.score).toBe(0);
+    expect(result.current.message).toContain('Incorrecto');
+  });
+
+  it('should persist high score to localStorage', async () => {
+    const { result } = renderHook(() => useTriviaGame());
+
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    await act(async () => {
+      result.current.handleGuess('Pikachu');
+    });
+
+    expect(localStorage.getItem('pokeHighScore')).toBe('1');
+  });
+});

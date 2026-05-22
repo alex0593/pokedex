@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from database import get_db
@@ -10,7 +10,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.post("/register", response_model=UserProfile)
-async def register(user: UserCreate, db: AsyncSession = Depends(get_db)):
+async def register(user: UserCreate, request: Request, db: AsyncSession = Depends(get_db)):
     # Check if user exists
     result = await db.execute(select(User).filter(User.username == user.username))
     existing_user = result.scalars().first()

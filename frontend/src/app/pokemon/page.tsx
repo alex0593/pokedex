@@ -1,20 +1,29 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import {
   fetchPokemons,
   fetchPokemonDetail,
   fetchTypes,
   fetchRandomPokemon,
 } from '../../services/pokemonService';
-import { getLoggedUser, logout } from '../../services/authService';
 import { PokemonSummary, PokemonDetail } from '../../types/pokemon';
 import { PokemonCard } from '../../components/PokemonCard';
-import { PokemonModal } from '../../components/PokemonModal';
-import { AuthModal } from '../../components/AuthModal';
-import styles from './page.module.css';
-import { MiniNav } from '../../components/MiniNav';
+import { PageLayout } from '../../components/PageLayout';
+import { ToastContainer } from '../../components/Toast';
 import { Skeleton } from '../../components/Skeleton';
+import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
+import { useToast } from '../../hooks/useToast';
+import { translate } from '../../utils/translations';
+import { getTypeBgColor, getTypeTextColor } from '../../utils/typeColors';
+import { motion, AnimatePresence } from 'framer-motion';
+import styles from './page.module.css';
+
+const PokemonModal = dynamic(
+  () => import('../../components/PokemonModal').then(mod => ({ default: mod.PokemonModal })),
+  { ssr: false },
+);
 
 const LIMIT = 25;
 
@@ -29,24 +38,18 @@ export default function Pokedex() {
   const [selectedPokemon, setSelectedPokemon] = useState<PokemonDetail | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Auth State
-  const [user, setUser] = useState<string | null>(null);
-  const [showAuth, setShowAuth] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const { toasts, showError, dismiss } = useToast();
 
+  // Carga inicial de tipos
   useEffect(() => {
-    setUser(getLoggedUser());
-
-    async function getTypes() {
-      try {
-        const typesData = await fetchTypes();
-        setTypes(typesData);
-      } catch (e) {
-        console.error("Failed to load types", e);
-      }
-    }
-    getTypes();
+    fetchTypes()
+      .then(setTypes)
+      .catch(() => showError('No se pudieron cargar los tipos de Pokémon.'));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Búsqueda con debounce (400 ms) — reinicia a offset 0 en cada cambio de filtros
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
       setLoading(true);
@@ -54,25 +57,21 @@ export default function Pokedex() {
         const data = await fetchPokemons(LIMIT, 0, searchTerm, selectedTypes);
         setPokemons(data);
         setOffset(0);
-      } catch (error) {
-        console.error("Fetch failed", error);
+      } catch {
+        showError('No se pudieron cargar los Pokémon. Verifica tu conexión.');
       } finally {
         setLoading(false);
       }
     }, 400);
 
     return () => clearTimeout(timeoutId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, selectedTypes]);
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
   const toggleType = (type: string) => {
-    const updatedTypes = selectedTypes.includes(type)
-      ? selectedTypes.filter(t => t !== type)
-      : [...selectedTypes, type];
-    setSelectedTypes(updatedTypes);
+    setSelectedTypes(prev =>
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type],
+    );
   };
 
   const clearFilters = () => {
@@ -88,136 +87,143 @@ export default function Pokedex() {
       const morePoke = await fetchPokemons(LIMIT, nextOffset, searchTerm, selectedTypes);
       setPokemons(prev => [...prev, ...morePoke]);
       setOffset(nextOffset);
-    } catch (error) {
-      console.error("Load more failed", error);
+    } catch {
+      showError('Error al cargar más Pokémon.');
     } finally {
       setLoadingMore(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [offset, loadingMore, searchTerm, selectedTypes]);
+
+  useInfiniteScroll(triggerRef, { loading, loadingMore, onLoadMore: loadMore });
 
   const openDetail = async (id: string | number) => {
     try {
       const detail = await fetchPokemonDetail(id);
       setSelectedPokemon(detail);
       setIsModalOpen(true);
-    } catch (error) {
-      console.error("Fetch detail failed", error);
+    } catch {
+      showError('No se pudo cargar el detalle del Pokémon.');
     }
   };
 
-  // INFINITE SCROLL OBSERVER
-  useEffect(() => {
-    if (loading) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !loadingMore) {
-          loadMore();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    const target = document.querySelector('#infiniteScrollTrigger');
-    if (target) observer.observe(target);
-
-    return () => observer.disconnect();
-  }, [loading, loadingMore, loadMore]);
-
-  const handleLogout = () => {
-    logout();
-    setUser(null);
+  const openRandom = async () => {
+    setLoading(true);
+    try {
+      const random = await fetchRandomPokemon();
+      setSelectedPokemon(random);
+      setIsModalOpen(true);
+    } catch {
+      showError('No se pudo cargar un Pokémon aleatorio.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <main className={styles.mainContainer}>
-      <header className={styles.header}>
-        <div className={styles.logoArea}>
-          <h1 className={styles.title}>POKEDEX PRO MAX</h1>
-          {user ? (
-            <div className={styles.userStatus}>
-              <span className={styles.userName}>Hola, {user}</span>
-              <button onClick={handleLogout} className={styles.logoutBtn}>Cerrar Sesión</button>
-            </div>
-          ) : (
-            <button onClick={() => setShowAuth(true)} className={styles.loginBtn}>Entrar</button>
-          )}
-        </div>
-        
-        <MiniNav />
-      </header>
-
-      {showAuth && (
-        <AuthModal
-          onClose={() => setShowAuth(false)}
-          onSuccess={(uname) => {
-            setUser(uname);
-            setShowAuth(false);
-          }}
-        />
-      )}
-
-      <>
-        {/* SEARCH AND FILTERS */}
+      <PageLayout>
+        {/* BÚSQUEDA Y FILTROS */}
         <section className={styles.controls}>
-            <div className={styles.searchWrapper}>
-              <input
-                type="text"
-                placeholder="Search by name (e.g. Pikachu, Bulba...)"
-                className={styles.searchInput}
-                value={searchTerm}
-                onChange={handleSearchChange}
-              />
-              <button
-                className={styles.randomBtn}
-                onClick={async () => {
-                  setLoading(true);
-                  try {
-                    const random = await fetchRandomPokemon();
-                    setSelectedPokemon(random);
-                    setIsModalOpen(true);
-                  } catch (e) {
-                    console.error(e);
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-                title="Sorpéndeme"
-              >
-                🎲
-              </button>
+          <div className={styles.searchWrapper}>
+            <input
+              type="text"
+              placeholder="Buscar por nombre (ej: Pikachu, Bulbasaur...)"
+              className={styles.searchInput}
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              aria-label="Buscar Pokémon"
+            />
+            <button
+              className={styles.randomBtn}
+              onClick={openRandom}
+              title="Pokémon aleatorio"
+              aria-label="Pokémon aleatorio"
+              type="button"
+            >
+              🎲
+            </button>
+          </div>
+
+          <div className={styles.filterSection}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <span className={styles.filterLabel}>Filtros</span>
+              {(selectedTypes.length > 0 || searchTerm) && (
+                <button
+                  onClick={clearFilters}
+                  style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
+                  type="button"
+                >
+                  BORRAR TODO
+                </button>
+              )}
             </div>
 
-            <div className={styles.filterSection}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <span className={styles.filterLabel}>Filters</span>
-                {(selectedTypes.length > 0 || searchTerm) && (
-                  <button
-                    onClick={clearFilters}
-                    style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
-                  >
-                    CLEAR ALL
-                  </button>
-                )}
-              </div>
-
-              <div className={styles.chipsContainer}>
-                {types.map(type => (
+            <div className={styles.chipsContainer}>
+              {types.map(type => {
+                const active = selectedTypes.includes(type);
+                return (
                   <button
                     key={type}
-                    className={`${styles.chip} ${selectedTypes.includes(type) ? styles.chipActive : ''}`}
+                    className={`${styles.chip} ${active ? styles.chipActive : ''}`}
                     onClick={() => toggleType(type)}
+                    style={
+                      active
+                        ? { backgroundColor: getTypeBgColor(type), borderColor: getTypeBgColor(type), color: '#fff' }
+                        : { borderColor: getTypeTextColor(type), color: getTypeTextColor(type) }
+                    }
+                    type="button"
                   >
-                    {type}
+                    {translate(type, 'types')}
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          </section>
+          </div>
+        </section>
 
-          {loading ? (
-            <div className={styles.pokemonGrid}>
-              {Array.from({ length: 12 }).map((_, i) => (
+        {loading ? (
+          <div className={styles.pokemonGrid}>
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className={styles.skeletonCard}>
+                <Skeleton height={150} borderRadius="15px 15px 0 0" />
+                <div style={{ padding: '15px' }}>
+                  <Skeleton height={20} width="60%" />
+                  <Skeleton height={15} width="40%" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className={styles.pokemonGrid}>
+            {pokemons.length > 0 ? (
+              pokemons.map((pokemon, index) => (
+                <motion.div
+                  key={pokemon.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.5) }}
+                >
+                  <PokemonCard pokemon={pokemon} onClick={openDetail} />
+                </motion.div>
+              ))
+            ) : (
+              <div className={styles.noResults}>
+                <h2>Sin resultados para tu búsqueda</h2>
+                <p>Prueba con otro nombre o limpia los filtros.</p>
+                <button className={styles.loadMoreBtn} onClick={clearFilters} style={{ marginTop: '20px' }} type="button">
+                  Quitar filtros
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Trigger de scroll infinito */}
+        <div ref={triggerRef} className={styles.loadMoreContainer}>
+          {loadingMore && (
+            <div className={styles.pokemonGrid} style={{ width: '100%', marginTop: '20px' }}>
+              {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className={styles.skeletonCard}>
                   <Skeleton height={150} borderRadius="15px 15px 0 0" />
                   <div style={{ padding: '15px' }}>
@@ -227,62 +233,17 @@ export default function Pokedex() {
                 </div>
               ))}
             </div>
-          ) : (
-            <div className={styles.pokemonGrid}>
-              {pokemons.length > 0 ? (
-                pokemons.map(pokemon => (
-                  <PokemonCard
-                    key={pokemon.id}
-                    pokemon={pokemon}
-                    onClick={openDetail}
-                  />
-                ))
-              ) : (
-                <div className={styles.noResults}>
-                  <h2>No results match your criteria</h2>
-                  <p>Try searching for something else or clearing filters.</p>
-                  <button className={styles.btn} onClick={clearFilters} style={{ marginTop: '20px' }}>Reset Filters</button>
-                </div>
-              )}
-            </div>
           )}
+        </div>
 
-          <div id="infiniteScrollTrigger" className={styles.loadMoreContainer}>
-            {loadingMore && (
-              <div className={styles.pokemonGrid} style={{ width: '100%', marginTop: '20px' }}>
-                 {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className={styles.skeletonCard}>
-                    <Skeleton height={150} borderRadius="15px 15px 0 0" />
-                    <div style={{ padding: '15px' }}>
-                      <Skeleton height={20} width="60%" />
-                      <Skeleton height={15} width="40%" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {!loadingMore && pokemons.length > 0 && pokemons.length % LIMIT === 0 && (
-              <button
-                className={styles.loadMoreBtn}
-                onClick={loadMore}
-                style={{ opacity: 0.5, fontSize: '0.7rem' }}
-              >
-                Cargando más resultados...
-              </button>
-            )}
-          </div>
-        </>
+        <AnimatePresence>
+          {isModalOpen && selectedPokemon && (
+            <PokemonModal pokemon={selectedPokemon} onClose={() => setIsModalOpen(false)} />
+          )}
+        </AnimatePresence>
+      </PageLayout>
 
-      {isModalOpen && selectedPokemon && (
-        <PokemonModal
-          pokemon={selectedPokemon}
-          onClose={() => setIsModalOpen(false)}
-        />
-      )}
-
-      <footer className={styles.footer}>
-        <p>&copy; 2026 POKEDEX &bull; PRO MAX</p>
-      </footer>
+      <ToastContainer messages={toasts} onDismiss={dismiss} />
     </main>
   );
 }

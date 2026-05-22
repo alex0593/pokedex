@@ -3,24 +3,51 @@ import logging
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from fastapi.exceptions import RequestValidationError
 from dotenv import load_dotenv
 from routers import pokemon, types, user, stats, moves, abilities, items, berries, locations, evolutions
 from database import engine, Base
+from utils.logging_config import setup_json_logging
 import uvicorn
 
 load_dotenv()
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logger = setup_json_logging("pokedex")
+logging.getLogger("uvicorn").handlers.clear()
+logging.getLogger("uvicorn.access").handlers.clear()
 
 app = FastAPI(
     title="Pokedex API - Backend PokeAPI",
     description="Backend con sistema de perfiles, logros y estadísticas.",
     version="2.2.1",
 )
+
+# Rate limiting
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+
+# Security headers middleware — hosts configurables via ALLOWED_HOSTS env var
+_allowed_hosts_env = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1")
+allowed_hosts = [h.strip() for h in _allowed_hosts_env.split(",") if h.strip()]
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=allowed_hosts,
+)
+
+# Custom middleware for security headers
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    return response
 
 # CORS Configuration — orígenes permitidos vía env (coma-separados)
 _cors_origins_env = os.getenv("CORS_ORIGINS", "").strip()
@@ -42,13 +69,29 @@ app.add_middleware(
 # Servir Archivos Estaticos Locales
 app.mount("/static", StaticFiles(directory="assets"), name="static")
 
-# Initialize Database tables
+# Health check endpoint
+@app.get("/health", tags=["Health"])
+async def health_check():
+    """Health check endpoint for Docker and load balancers."""
+    return {
+        "status": "healthy",
+        "version": "2.2.1"
+    }
+
+# Initialize Database tables and Cache
 @app.on_event("startup")
 async def startup():
     from services.pokeapi_service import PokeAPIService
-    
+    from services.cache_service import CacheService
 
-    
+    # 1. Initialize Cache Service
+    redis_url = os.getenv('REDIS_URL', 'redis://:pokedex_redis_pass_dev@localhost:6379/0')
+    try:
+        await CacheService.initialize(redis_url)
+        logging.info('Redis cache service initialized')
+    except Exception as e:
+        logging.warning(f'Redis cache failed to initialize: {e}. Continuing without cache.')
+
     # 2. Database Sync
     async with engine.begin() as conn:
         # Create all tables if they don't exist
@@ -58,7 +101,14 @@ async def startup():
 @app.on_event("shutdown")
 async def shutdown():
     from services.pokeapi_service import PokeAPIService
+    from services.cache_service import CacheService
+
     await PokeAPIService.close()
+    try:
+        cache = CacheService.get_instance()
+        await cache.close()
+    except RuntimeError:
+        pass
 
 # Register Routers
 app.include_router(pokemon.router)

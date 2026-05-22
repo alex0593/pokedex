@@ -1,6 +1,6 @@
 import logging
 import httpx
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Response
 from services.pokeapi_service import PokeAPIService
 
 
@@ -22,32 +22,42 @@ def make_catalog_router(entity_type: str, entity_display_name: str = None) -> AP
     router = APIRouter(prefix=f"/{entity_type}s", tags=[entity_display_name + "s"])
 
     @router.get("/")
-    async def list_entities(limit: int = 25, offset: int = 0):
+    async def list_entities(limit: int = 25, offset: int = 0, response: Response = None):
         """Lista paginada de entidades."""
         try:
-            return await PokeAPIService.get_generic_data(entity_type, limit, offset)
+            data = await PokeAPIService.get_generic_data(entity_type, limit, offset)
+            if response:
+                response.headers['Cache-Control'] = 'public, max-age=3600'
+            return data
         except (httpx.HTTPError, httpx.TimeoutException, ValueError) as e:
             logger.error(f"Error fetching {entity_type}s: {e}", exc_info=True)
             raise HTTPException(status_code=500, detail=str(e))
 
     @router.get("/batch")
     async def get_batch(
-        names: str = Query(..., description="Nombres o IDs separados por coma")
+        names: str = Query(..., description="Nombres o IDs separados por coma"),
+        response: Response = None
     ):
         """Obtener múltiples entidades a la vez."""
         try:
             id_list = [id.strip() for id in names.split(",")]
-            return await PokeAPIService.get_generic_batch(entity_type, id_list)
+            data = await PokeAPIService.get_generic_batch(entity_type, id_list)
+            if response:
+                response.headers['Cache-Control'] = 'public, max-age=3600'
+            return data
         except (httpx.HTTPError, httpx.TimeoutException, ValueError) as e:
             logger.error(f"Error fetching {entity_type}s batch: {e}", exc_info=True)
             raise HTTPException(status_code=500, detail=str(e))
 
     @router.get("/{name_or_id}")
-    async def get_detail(name_or_id: str):
+    async def get_detail(name_or_id: str, response: Response = None):
         """Obtener detalles de una entidad específica."""
         try:
             data = await PokeAPIService.get_generic_detail(entity_type, name_or_id)
-            return PokeAPIService.transform_generic(data, entity_type)
+            result = PokeAPIService.transform_generic(data, entity_type)
+            if response:
+                response.headers['Cache-Control'] = 'public, max-age=86400'
+            return result
         except (httpx.HTTPError, httpx.TimeoutException, ValueError) as e:
             logger.error(f"Error fetching {entity_type} detail for {name_or_id}: {e}", exc_info=True)
             raise HTTPException(status_code=404, detail=f"{entity_display_name} not found")

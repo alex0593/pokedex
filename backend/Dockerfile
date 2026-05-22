@@ -1,25 +1,43 @@
+# Build stage
+FROM python:3.14-slim as builder
+
+WORKDIR /build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+# Runtime stage
 FROM python:3.14-slim
 
 WORKDIR /app
 
-# Instalar dependencias del sistema
+# Install runtime dependencies only
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc postgresql-client && \
+    postgresql-client && \
     rm -rf /var/lib/apt/lists/*
 
-# Copiar requirements y instalar Python deps
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Create non-root user
+RUN useradd -m -u 1000 appuser
 
-# Copiar código
-COPY . .
+# Copy Python dependencies from builder
+COPY --from=builder /root/.local /home/appuser/.local
 
-# Exponer puerto
+ENV PATH=/home/appuser/.local/bin:$PATH \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# Copy application code
+COPY --chown=appuser:appuser . .
+
+USER appuser
+
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=10s --timeout=5s --retries=5 \
-    CMD python -c "import requests; requests.get('http://localhost:8000/docs', timeout=5)"
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:8000/health', timeout=5)" || exit 1
 
-# Comando
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

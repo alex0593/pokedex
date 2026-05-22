@@ -1,7 +1,9 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { MoveDetail } from '../types/catalog';
 import styles from './MoveModal.module.css';
 import { translate, getSpanishEffect } from '../utils/translations';
+import { getTypeBgColor } from '../utils/typeColors';
 
 interface MoveModalProps {
     move: MoveDetail;
@@ -11,28 +13,34 @@ interface MoveModalProps {
 export const MoveModal: React.FC<MoveModalProps> = ({ move, onClose }) => {
     const effectDesc = getSpanishEffect(move.effect_entries);
 
-    const getTypeColor = (type: string) => {
-        const colors: Record<string, string> = {
-            normal: '#A8A878', fire: '#F08030', water: '#6890F0', grass: '#78C850',
-            electric: '#F8D030', ice: '#98D8D8', fighting: '#C03028', poison: '#A040A0',
-            ground: '#E0C068', flying: '#A890F0', psychic: '#F85888', bug: '#A8B820',
-            rock: '#B8A038', ghost: '#705898', dragon: '#7038F8', steel: '#B8B8D0',
-            fairy: '#EE99AC', dark: '#705848'
-        };
-        return colors[type] || '#A8A878';
-    };
-
     return (
-        <div className={styles.overlay} onClick={onClose}>
-            <div className={styles.modal} onClick={e => e.stopPropagation()}>
-                <button className={styles.closeBtn} onClick={onClose}>&times;</button>
+        <div className={styles.overlay} onClick={onClose} role="presentation">
+            <motion.div
+                className={styles.modal}
+                onClick={e => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="move-modal-title"
+                initial={{ opacity: 0, scale: 0.92, y: 30 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            >
+                <button
+                    className={styles.closeBtn}
+                    onClick={onClose}
+                    aria-label="Cerrar modal"
+                    type="button"
+                >
+                    &times;
+                </button>
 
                 <div className={styles.header}>
                     <div className={styles.nameContainer}>
                         <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>#{move.id?.toString().padStart(3, '0') || '???' }</span>
-                        <h2 className={styles.name}>{(move.name || 'Sin nombre').replace('-', ' ')}</h2>
+                        <h2 className={styles.name} id="move-modal-title">{(move.name || 'Sin nombre').replace('-', ' ')}</h2>
                         <div>
-                            <span className={styles.typeBadge} style={{ backgroundColor: getTypeColor(move.type?.name || 'normal') }}>
+                            <span className={styles.typeBadge} style={{ backgroundColor: getTypeBgColor(move.type?.name || 'normal') }}>
                                 {translate(move.type?.name || '', 'types')}
                             </span>
                             <span className={styles.typeBadge} style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
@@ -67,7 +75,7 @@ export const MoveModal: React.FC<MoveModalProps> = ({ move, onClose }) => {
                         <p className={styles.effectText}>{effectDesc}</p>
                     </div>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 };
