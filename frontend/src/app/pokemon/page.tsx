@@ -18,6 +18,8 @@ import { useToast } from '../../hooks/useToast';
 import { translate } from '../../utils/translations';
 import { getTypeBgColor, getTypeTextColor } from '../../utils/typeColors';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../../contexts/AuthContext';
+import { useFavorites } from '../../contexts/FavoritesContext';
 import styles from './page.module.css';
 
 const PokemonModal = dynamic(
@@ -40,6 +42,8 @@ export default function Pokedex() {
 
   const triggerRef = useRef<HTMLDivElement>(null);
   const { toasts, showError, dismiss } = useToast();
+  const { user } = useAuth();
+  const { isFavorite, toggle } = useFavorites();
 
   // Carga inicial de tipos
   useEffect(() => {
@@ -204,7 +208,12 @@ export default function Pokedex() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.5) }}
                 >
-                  <PokemonCard pokemon={pokemon} onClick={openDetail} />
+                  <PokemonCard
+                    pokemon={pokemon}
+                    onClick={openDetail}
+                    isFavorite={user ? isFavorite('pokemon', pokemon.name.toLowerCase()) : undefined}
+                    onToggleFavorite={user ? () => toggle('pokemon', pokemon.name.toLowerCase(), pokemon.id) : undefined}
+                  />
                 </motion.div>
               ))
             ) : (

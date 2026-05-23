@@ -1,3 +1,3 @@
 from routers._generic import make_catalog_router
 
-router = make_catalog_router("berry", "Berry")
+router = make_catalog_router("berry", "Berry", route_prefix="/berries")

@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 os.environ['CORS_ORIGINS'] = 'http://localhost:3000'
 os.environ['SECRET_KEY'] = 'test-secret-key-12345'
 os.environ['DATABASE_URL'] = 'sqlite+aiosqlite:///:memory:'
+os.environ['ALLOWED_HOSTS'] = 'localhost,127.0.0.1,testserver'  # TestClient usa 'testserver'
 
 from database import Base, get_db
 from main import app

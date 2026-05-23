@@ -6,13 +6,19 @@ from fastapi import APIRouter, HTTPException, Query, Response
 from services.pokeapi_service import PokeAPIService
 
 
-def make_catalog_router(entity_type: str, entity_display_name: str = None) -> APIRouter:
+def make_catalog_router(
+    entity_type: str,
+    entity_display_name: str = None,
+    route_prefix: str = None,
+) -> APIRouter:
     """
     Factory para generar routers de catálogo idénticos (moves, abilities, items, berries).
 
     Args:
         entity_type: nombre del endpoint en PokeAPI (e.g., "move", "ability")
         entity_display_name: nombre legible (e.g., "Move"), default: entity_type.capitalize()
+        route_prefix: prefijo de ruta explícito (e.g., "/abilities"). Si no se proporciona,
+            se genera como "/{entity_type}s" (funciona bien para formas regulares).
 
     Returns:
         APIRouter con 3 endpoints: list, batch, detail
@@ -20,8 +26,9 @@ def make_catalog_router(entity_type: str, entity_display_name: str = None) -> AP
     if not entity_display_name:
         entity_display_name = entity_type.capitalize()
 
+    prefix = route_prefix if route_prefix else f"/{entity_type}s"
     logger = logging.getLogger(f"routers.{entity_type}")
-    router = APIRouter(prefix=f"/{entity_type}s", tags=[entity_display_name + "s"])
+    router = APIRouter(prefix=prefix, tags=[entity_display_name + "s"])
 
     @router.get("/")
     async def list_entities(limit: int = 25, offset: int = 0, response: Response = None):

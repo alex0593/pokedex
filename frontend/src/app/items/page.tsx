@@ -11,6 +11,8 @@ import { ToastContainer } from '../../components/Toast';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 import { useToast } from '../../hooks/useToast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../../contexts/AuthContext';
+import { useFavorites } from '../../contexts/FavoritesContext';
 import styles from './items.module.css';
 
 const ItemModal = dynamic(
@@ -31,6 +33,8 @@ export default function ItemsCatalog() {
 
   const triggerRef = useRef<HTMLDivElement>(null);
   const { toasts, showError, dismiss } = useToast();
+  const { user } = useAuth();
+  const { isFavorite, toggle } = useFavorites();
 
   useEffect(() => {
     async function getInitialItems() {
@@ -129,7 +133,12 @@ export default function ItemsCatalog() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.5) }}
               >
-                <ItemCard item={item} onClick={openModal} />
+                <ItemCard
+                  item={item}
+                  onClick={openModal}
+                  isFavorite={user ? isFavorite('item', item.name) : undefined}
+                  onToggleFavorite={user ? () => toggle('item', item.name, item.id) : undefined}
+                />
               </motion.div>
             ))}
           </div>

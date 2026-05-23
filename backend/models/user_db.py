@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, Table
+from sqlalchemy import Column, ForeignKey, Integer, String, Table, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -22,6 +22,7 @@ class User(Base):
     stats = relationship("UserStats", back_populates="user", uselist=False)
     region_stats = relationship("UserRegionStat", back_populates="user", cascade="all, delete-orphan")
     achievements = relationship("Achievement", secondary=user_achievements, back_populates="users")
+    favorites = relationship("UserFavorite", back_populates="user", cascade="all, delete-orphan")
 
 class UserStats(Base):
     __tablename__ = "user_stats"
@@ -56,3 +57,21 @@ class UserRegionStat(Base):
     correct_answers = Column(Integer, default=0)
 
     user = relationship("User", back_populates="region_stats")
+
+
+class UserFavorite(Base):
+    """Entidad favorita de un usuario (pokemon / item / berry / ability / move)."""
+
+    __tablename__ = "user_favorites"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    entity_type = Column(String, nullable=False)   # pokemon | item | berry | ability | move
+    entity_id = Column(Integer, nullable=True)     # ID numérico de PokeAPI (puede ser None)
+    entity_name = Column(String, nullable=False)   # Nombre canónico (slug PokeAPI)
+
+    user = relationship("User", back_populates="favorites")
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "entity_type", "entity_name", name="uq_user_favorite"),
+    )

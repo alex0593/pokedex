@@ -2,13 +2,16 @@ import React from 'react';
 import { MoveDetail } from '../types/catalog';
 import styles from './MoveCard.module.css';
 import { translate } from '../utils/translations';
+import { FavoriteButton } from './FavoriteButton';
 
 interface MoveCardProps {
   move: MoveDetail;
   onClick: (name: string) => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: (e: React.MouseEvent) => void;
 }
 
-export function MoveCard({ move, onClick }: MoveCardProps) {
+export function MoveCard({ move, onClick, isFavorite, onToggleFavorite }: MoveCardProps) {
   // Simple type color mapping
   const getTypeColor = (type: string) => {
     const colors: Record<string, string> = {
@@ -25,10 +28,13 @@ export function MoveCard({ move, onClick }: MoveCardProps) {
 
   return (
     <div className={styles.card} onClick={() => onClick(move.name || '')}>
+      {onToggleFavorite && (
+        <FavoriteButton isFavorite={!!isFavorite} onToggle={onToggleFavorite} />
+      )}
       <span className={styles.idBadge}>#{move.id?.toString().padStart(3, '0') || '???' }</span>
-      
+
       <h3 className={styles.name}>{(move.name || 'Sin nombre').replace('-', ' ')}</h3>
-      
+
       <div className={styles.typeContainer}>
         <span className={styles.typeBadge} style={{ backgroundColor: getTypeColor(move.type?.name || 'normal') }}>
           {translate(move.type?.name || '', 'types')}
@@ -37,7 +43,7 @@ export function MoveCard({ move, onClick }: MoveCardProps) {
           {translate(move.damage_class?.name || '', 'damage_classes')}
         </span>
       </div>
-      
+
       <div className={styles.statsGrid}>
         <div className={styles.statItem}>
           <span className={styles.statLabel}>Poder</span>

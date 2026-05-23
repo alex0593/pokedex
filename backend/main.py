@@ -18,6 +18,7 @@ from routers import (
     abilities,
     berries,
     evolutions,
+    favorites,
     items,
     locations,
     moves,
@@ -145,6 +146,7 @@ async def shutdown():
 app.include_router(pokemon.router)
 app.include_router(types.router)
 app.include_router(user.router)
+app.include_router(favorites.router)
 app.include_router(stats.router)
 app.include_router(moves.router)
 app.include_router(abilities.router)

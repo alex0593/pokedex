@@ -1,46 +1,62 @@
-import pytest
-import respx
+"""
+tests/test_catalog.py — Tests de los routers de catálogo genérico.
+
+Mockeamos PokeAPIService.get_generic_data directamente (capa de servicio)
+en lugar de usar respx sobre el cliente httpx singleton, que no es
+interceptado correctamente por el context-manager de respx.
+"""
+from unittest.mock import AsyncMock, patch
+
 from fastapi.testclient import TestClient
 
 
-@pytest.mark.asyncio
-async def test_get_moves_list(client: TestClient):
+def test_get_moves_list(client: TestClient):
     """Test fetching moves list with mock PokeAPI."""
-    with respx.mock:
-        respx.get('https://pokeapi.co/api/v2/move?limit=5&offset=0').mock(
-            return_value=respx.Response(200, json={
-                'results': [
-                    {'name': 'tackle', 'url': 'https://pokeapi.co/api/v2/move/1/'},
-                    {'name': 'water-gun', 'url': 'https://pokeapi.co/api/v2/move/55/'},
-                ]
-            })
-        )
-        response = client.get('/moves?limit=5&offset=0')
+    mock_data = {
+        "results": [
+            {"name": "tackle", "url": "https://pokeapi.co/api/v2/move/1/"},
+            {"name": "water-gun", "url": "https://pokeapi.co/api/v2/move/55/"},
+        ]
+    }
+    with patch(
+        "services.pokeapi_service.PokeAPIService.get_generic_data",
+        new_callable=AsyncMock,
+        return_value=mock_data,
+    ):
+        response = client.get("/moves?limit=5&offset=0")
         assert response.status_code == 200
+        data = response.json()
+        assert "results" in data
+        assert len(data["results"]) == 2
 
 
-@pytest.mark.asyncio
-async def test_get_abilities_list(client: TestClient):
+def test_get_abilities_list(client: TestClient):
     """Test fetching abilities list."""
-    with respx.mock:
-        respx.get('https://pokeapi.co/api/v2/ability?limit=5&offset=0').mock(
-            return_value=respx.Response(200, json={
-                'results': [
-                    {'name': 'static', 'url': 'https://pokeapi.co/api/v2/ability/9/'},
-                ]
-            })
-        )
-        response = client.get('/abilities?limit=5&offset=0')
+    mock_data = {
+        "results": [
+            {"name": "static", "url": "https://pokeapi.co/api/v2/ability/9/"},
+        ]
+    }
+    with patch(
+        "services.pokeapi_service.PokeAPIService.get_generic_data",
+        new_callable=AsyncMock,
+        return_value=mock_data,
+    ):
+        response = client.get("/abilities?limit=5&offset=0")
         assert response.status_code == 200
+        data = response.json()
+        assert "results" in data
+        assert len(data["results"]) == 1
 
 
 def test_catalog_cache_control_headers(client: TestClient):
-    """Test that catalog endpoints return Cache-Control headers."""
-    with respx.mock:
-        respx.get('https://pokeapi.co/api/v2/item?limit=5&offset=0').mock(
-            return_value=respx.Response(200, json={'results': []})
-        )
-        response = client.get('/items?limit=5&offset=0')
-        assert 'cache-control' in response.headers.lower()
-        # The header should be present (lowercase key might vary)
-        assert any('max-age' in str(v).lower() for k, v in response.headers.items())
+    """Test que los endpoints de catálogo devuelven headers Cache-Control."""
+    with patch(
+        "services.pokeapi_service.PokeAPIService.get_generic_data",
+        new_callable=AsyncMock,
+        return_value={"results": []},
+    ):
+        response = client.get("/items?limit=5&offset=0")
+        header_keys = [k.lower() for k in response.headers]
+        assert "cache-control" in header_keys
+        assert any("max-age" in str(v).lower() for k, v in response.headers.items())

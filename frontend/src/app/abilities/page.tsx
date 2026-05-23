@@ -11,6 +11,8 @@ import { ToastContainer } from '../../components/Toast';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 import { useToast } from '../../hooks/useToast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../../contexts/AuthContext';
+import { useFavorites } from '../../contexts/FavoritesContext';
 import styles from '../berries/berries.module.css'; // Reusing berries styles for consistency
 
 const AbilityModal = dynamic(
@@ -31,6 +33,8 @@ export default function AbilitiesCatalog() {
 
   const triggerRef = useRef<HTMLDivElement>(null);
   const { toasts, showError, dismiss } = useToast();
+  const { user } = useAuth();
+  const { isFavorite, toggle } = useFavorites();
 
   useEffect(() => {
     async function getInitialAbilities() {
@@ -128,7 +132,12 @@ export default function AbilitiesCatalog() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.5) }}
               >
-                <AbilityCard ability={ability} onClick={openModal} />
+                <AbilityCard
+                  ability={ability}
+                  onClick={openModal}
+                  isFavorite={user ? isFavorite('ability', ability.name) : undefined}
+                  onToggleFavorite={user ? () => toggle('ability', ability.name, ability.id) : undefined}
+                />
               </motion.div>
             ))}
           </div>

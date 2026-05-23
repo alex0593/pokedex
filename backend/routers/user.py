@@ -33,10 +33,14 @@ async def register(user: UserCreate, request: Request, db: AsyncSession = Depend
     db.add(stats)
     await db.commit()
 
-    # Eager load relations to prevent MissingGreenlet error in response serialization
+    # Eager load ALL relations to prevent MissingGreenlet error in response serialization
     result = await db.execute(
         select(User)
-        .options(selectinload(User.stats), selectinload(User.achievements))
+        .options(
+            selectinload(User.stats),
+            selectinload(User.achievements),
+            selectinload(User.region_stats),
+        )
         .filter(User.id == new_user.id)
     )
     return result.scalars().first()
