@@ -150,9 +150,35 @@
   line-height: 1;
 }
 
-.typeEmoji {
-  font-size: 2rem;
-  line-height: 1;
+/* Contenedor del badge pill de tipo oficial */
+.typeIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 32px;
+}
+
+/* Badge pill oficial de PokeAPI (Scarlet/Violet) */
+.typeIcon {
+  height: 26px;
+  width: auto;
+  max-width: 96px;
+  object-fit: contain;
+  /* Sombra suave del color del tipo */
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.55));
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.stageCard:hover .typeIcon {
+  transform: scale(1.08);
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.65));
+}
+
+/* Fallback si la imagen no carga */
+.typeIconFallback {
+  font-size: 1.4rem;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .typeName {
@@ -207,8 +233,8 @@
     padding: 16px 10px 14px;
   }
 
-  .typeEmoji {
-    font-size: 1.6rem;
+  .typeIcon {
+    height: 22px;
   }
 
   .typeName {

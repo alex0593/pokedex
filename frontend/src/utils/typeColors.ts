@@ -63,3 +63,38 @@ export function getTypeBgColor(type: string): string {
 export function getTypeTextColor(type: string): string {
   return TYPE_TEXT_COLORS[type as PokemonType] ?? '#919aa2';
 }
+
+/**
+ * ID numérico de cada tipo en la PokeAPI.
+ * Usado para construir las URLs de los iconos oficiales.
+ */
+const TYPE_IDS: Record<PokemonType, number> = {
+  normal:   1,
+  fighting: 2,
+  flying:   3,
+  poison:   4,
+  ground:   5,
+  rock:     6,
+  bug:      7,
+  ghost:    8,
+  steel:    9,
+  fire:     10,
+  water:    11,
+  grass:    12,
+  electric: 13,
+  psychic:  14,
+  ice:      15,
+  dragon:   16,
+  dark:     17,
+  fairy:    18,
+};
+
+/**
+ * Devuelve la URL del icono oficial de tipo (badge pill de Scarlet/Violet).
+ * Fuente: repositorio de sprites de PokeAPI en GitHub (ya en remotePatterns y CSP).
+ */
+export function getTypeIconUrl(type: string): string {
+  const id = TYPE_IDS[type as PokemonType];
+  if (!id) return '';
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-ix/scarlet-violet/${id}.png`;
+}
