@@ -31,6 +31,17 @@ const cspDirectives = [
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+
+  // ── Orígenes permitidos en desarrollo (cross-origin HMR / fast refresh) ───────
+  // Necesario cuando se accede desde otro dispositivo (móvil, tablet) vía Tailscale
+  // (100.x.x.x) o red local (192.168.x.x / 10.x.x.x).
+  // Solo aplica en `next dev` — no tiene efecto en producción.
+  allowedDevOrigins: [
+    "100.*.*.*",     // Tailscale CGNAT range
+    "192.168.*.*",   // LAN doméstica / oficina
+    "10.*.*.*",      // LAN corporativa
+  ],
+
   images: {
     remotePatterns: [
       {
