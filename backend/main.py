@@ -54,10 +54,65 @@ if _sentry_dsn:
 else:
     logger.info("Sentry DSN not configured — error tracking disabled")
 
+_API_DESCRIPTION = """
+## POKÉDEX PRO MAX — API
+
+Backend proxy sobre [PokeAPI](https://pokeapi.co) con autenticación JWT, perfiles de usuario,
+sistema de logros regionales y colección de favoritos.
+
+### Grupos de endpoints
+
+| Tag | Descripción |
+|-----|-------------|
+| **Pokémon** | Lista paginada, búsqueda, detalle completo, tipos, quiz |
+| **Moves** | Movimientos con poder, precisión, PP y clase de daño |
+| **Abilities** | Habilidades y Pokémon que las aprenden |
+| **Items** | Objetos con coste, categoría y efecto |
+| **Berries** | Bayas con datos de cultivo y firmeza |
+| **Types** | Lista de todos los tipos |
+| **Evolutions** | Cadenas de evolución |
+| **Locations** | Áreas y localidades por región |
+| **Users** | Registro, login JWT, perfil, logros, avatares |
+| **Favorites** | CRUD de favoritos (requiere autenticación) |
+| **Stats** | Estadísticas de trivia por usuario y ranking |
+| **Health** | Estado del servicio |
+
+### Autenticación
+
+Los endpoints marcados con 🔒 requieren un **Bearer token** JWT.
+Obtén el token en `POST /users/login` y añádelo como header:
+```
+Authorization: Bearer <token>
+```
+"""
+
 app = FastAPI(
-    title="Pokedex API - Backend PokeAPI",
-    description="Backend con sistema de perfiles, logros y estadísticas.",
-    version="2.2.1",
+    title="Pokédex Pro Max API",
+    description=_API_DESCRIPTION,
+    version="2.3.0",
+    contact={
+        "name": "POKEDEX Dev",
+        "url": "https://github.com/alex0593/pokedex",
+    },
+    license_info={
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT",
+    },
+    openapi_tags=[
+        {"name": "Pokémon", "description": "Listado, búsqueda y detalle de Pokémon. Incluye filtros por tipo y endpoint de quiz."},
+        {"name": "Moves", "description": "Movimientos: poder, precisión, PP y clase de daño."},
+        {"name": "Abilities", "description": "Habilidades especiales y Pokémon que las poseen."},
+        {"name": "Items", "description": "Objetos de juego: coste, categoría, efecto y sprite."},
+        {"name": "Berrys", "description": "Bayas: tiempo de crecimiento, firmeza y cosecha."},
+        {"name": "Types", "description": "Lista de todos los tipos Pokémon."},
+        {"name": "Evolutions", "description": "Cadenas evolutivas completas."},
+        {"name": "Locations", "description": "Áreas y localidades agrupadas por región."},
+        {"name": "Users", "description": "Autenticación JWT, perfiles, logros regionales y avatares."},
+        {"name": "Favorites", "description": "🔒 Colección personal de favoritos (Pokémon, objetos, bayas, habilidades, movimientos)."},
+        {"name": "Stats", "description": "Estadísticas de trivia: ranking, racha y récord por región."},
+        {"name": "Health", "description": "Estado del servicio y versión."},
+        {"name": "General", "description": "Información general de la API."},
+    ],
 )
 
 # Rate limiting
@@ -108,7 +163,7 @@ async def health_check():
     """Health check endpoint for Docker and load balancers."""
     return {
         "status": "healthy",
-        "version": "2.2.1"
+        "version": "2.3.0"
     }
 
 # Initialize Database tables and Cache
@@ -158,9 +213,17 @@ app.include_router(evolutions.router)
 @app.get("/", tags=["General"])
 async def root():
     return {
-        "message": "¡Pokedex API V2.2.1 - Con Sistema de Logros y Mapeo Regional!",
-        "version": "2.2.1",
-        "features": ["Auth", "Stats", "Achievements", "Pokemon Search", "Region Maps"]
+        "message": "Pokédex Pro Max API v2.3.0",
+        "version": "2.3.0",
+        "docs": "/docs",
+        "features": [
+            "Auth JWT",
+            "User Profiles & Achievements",
+            "Favorites (Pokémon / Moves / Abilities / Items / Berries)",
+            "Pokémon Search & Filters",
+            "Regional Badges & Stats",
+            "Quiz / Trivia",
+        ],
     }
 
 if __name__ == "__main__":

@@ -16,6 +16,7 @@ export const MiniNav: React.FC = () => {
         { name: '✨ Habilidades', path: '/abilities' },
         { name: '⚔️ Movimientos', path: '/moves' },
         { name: '🎮 Juego', path: '/game' },
+        { name: '❤️ Favoritos', path: '/favorites' },
     ];
 
     return (
