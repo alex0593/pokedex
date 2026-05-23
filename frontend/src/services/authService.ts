@@ -25,7 +25,7 @@ export async function login(username: string, password: string): Promise<string>
         formData.append('username', username);
         formData.append('password', password);
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/users/login`, {
+        const response = await fetch(`/api/users/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: formData,
@@ -51,7 +51,7 @@ export async function login(username: string, password: string): Promise<string>
 
 export async function register(username: string, password: string): Promise<UserProfile> {
     try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/users/register`, {
+        const response = await fetch(`/api/users/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
@@ -75,7 +75,7 @@ export async function register(username: string, password: string): Promise<User
 export async function getProfile(username: string): Promise<UserProfile> {
     try {
         const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/users/profile?username=${username}`
+            `/api/users/profile?username=${username}`
         );
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
@@ -95,7 +95,7 @@ export async function getProfile(username: string): Promise<UserProfile> {
 export async function saveGameResult(username: string, correct: boolean, score: number): Promise<unknown> {
     try {
         const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/game/save-result?username=${username}&correct=${correct}&score=${score}`,
+            `/api/game/save-result?username=${username}&correct=${correct}&score=${score}`,
             { method: 'POST' }
         );
 
@@ -119,4 +119,40 @@ export function logout(): void {
 
 export function getLoggedUser(): string | null {
     return localStorage.getItem('poke_user');
+}
+
+export function getLoggedToken(): string | null {
+    return localStorage.getItem('poke_token');
+}
+
+// ── Aventura por Regiones ─────────────────────────────────────────────────────
+
+import { apiClient } from '../lib/apiClient';
+import type { StageAnswerResult, RegionProgress } from '../types/game';
+
+/**
+ * Registra una respuesta en un stage (POST /game/stage/answer).
+ * Requiere JWT — el token se pasa como argumento y se envía en el header Authorization.
+ */
+export async function saveStageAnswer(
+    token: string,
+    region: string,
+    typeName: string,
+    isCorrect: boolean,
+): Promise<StageAnswerResult> {
+    return apiClient<StageAnswerResult>('/game/stage/answer', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: { region, type_name: typeName, is_correct: isCorrect },
+    });
+}
+
+/**
+ * Obtiene el progreso completo del usuario por regiones (GET /game/regions/progress).
+ * Requiere JWT.
+ */
+export async function fetchRegionsProgress(token: string): Promise<RegionProgress[]> {
+    return apiClient<RegionProgress[]>('/game/regions/progress', {
+        headers: { Authorization: `Bearer ${token}` },
+    });
 }

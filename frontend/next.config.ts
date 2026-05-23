@@ -1,16 +1,31 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
-// Content Security Policy — permite los orígenes necesarios sin abrir demasiado.
-// 'unsafe-eval' e 'unsafe-inline' son requeridos por Next.js (chunks dinámicos y estilos).
-// connect-src incluye 'https:' para cubrir el backend y el ingest de Sentry.
+// URL del backend — usada SOLO en el servidor Next.js para las rewrites de proxy.
+// NO se expone al navegador. En Docker usa el nombre de servicio interno.
+// En desarrollo local usa localhost:8000.
+const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
+
+// Content Security Policy
+// Todas las llamadas al API van a /api/... (mismo origen) gracias al proxy.
+// 'self' cubre todas las llamadas al backend proxiadas.
+//
+// connect-src notas:
+//   - 'self'             → todas las llamadas API proxiadas (/api/*) + WebSockets de HMR
+//   - https:             → Sentry ingest + cualquier recurso externo HTTPS
+//   - ws://localhost:*   → WebSocket de HMR en desarrollo (Next.js fast refresh)
+//   - wss:               → WebSockets seguros en producción
+//
+// style-src / font-src notas:
+//   - globals.css importa Outfit + Fira Code vía @import url(fonts.googleapis.com)
+//   - fonts.gstatic.com sirve los archivos de fuente reales
 const cspDirectives = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
-  "style-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob: https://raw.githubusercontent.com",
-  "font-src 'self'",
-  "connect-src 'self' https:",
+  "font-src 'self' https://fonts.gstatic.com",
+  "connect-src 'self' https: ws://localhost:* wss:",
   "frame-ancestors 'none'",
 ].join("; ");
 
@@ -24,6 +39,19 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
+  },
+
+  // ── Proxy al backend ──────────────────────────────────────────────────────────
+  // Todas las llamadas a /api/:path* se redirigen al backend en el SERVIDOR de
+  // Next.js. El navegador solo ve la misma origin (no hay CORS ni localhost issues).
+  // Funciona desde cualquier dispositivo: móvil, tablet, PC.
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${backendUrl}/:path*`,
+      },
+    ];
   },
 
   // Security headers aplicados a todas las rutas

@@ -52,6 +52,8 @@ services:
       REDIS_URL: redis://:pokedex_redis_pass_dev@redis:6379/0
       CORS_ORIGINS: http://localhost:3000,http://localhost:8000
       SECRET_KEY: dev-secret-key-change-in-production
+      # Next.js proxy envía peticiones al backend con Host: backend:8000
+      ALLOWED_HOSTS: localhost,127.0.0.1,backend,pokedex-backend
     depends_on:
       postgres:
         condition: service_healthy
@@ -70,7 +72,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
+      # URL INTERNA al backend — usada por el servidor Next.js para el proxy (/api/*).
+      # No se expone al navegador. Usa la red Docker interna (no localhost).
+      BACKEND_URL: http://backend:8000
       NODE_ENV: production
     depends_on:
       - backend
