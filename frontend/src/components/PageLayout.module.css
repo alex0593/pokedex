@@ -20,7 +20,7 @@
   width: 100%;
   max-width: 1400px;
   gap: 12px;
-  padding: 7px 0;
+  padding: 17px 0;
 }
 
 /* Logo compacto a la izquierda */
@@ -159,7 +159,7 @@
 
   .navRow {
     gap: 6px;
-    padding: 6px 0;
+    padding: 12px 0;
   }
 
   /* Ocultar logo en móvil — la nav lo identifica */
