@@ -129,7 +129,7 @@ Active work follows a 10-block plan stored at `C:\Users\ALEXIS\.claude\plans\ana
 | 5 | ✅ Done | `CacheService` (Redis, TTL), `retry_with_backoff` in `PokeAPIService` |
 | 6 | ✅ Done | Tests: pytest + conftest (backend), vitest + jsdom (frontend) |
 | 7 | ✅ Done | Frontend `Dockerfile`, GitHub Actions CI (lint + test + docker build) |
-| 8 | 🔄 Partial | `slowapi` rate limiting ✅, JSON logging ✅ — Sentry + structlog pending |
+| 8 | ✅ Done | `slowapi` rate limiting, JSON logging, Sentry SDK (backend+frontend), security headers (CSP, HSTS…), `scripts/backup.sh` |
 | 9 | Pending | Features: favorites, comparator, team builder, more trivia modes |
 | 10 | Pending | Polish: root README, CHANGELOG, LICENSE, Swagger tags |
 
@@ -137,12 +137,16 @@ Each block must leave the repo green (lint + runnable) before moving on. Commit 
 
 ## Known Issues / Gotchas
 
-- **Python 3.14** in use locally (`cpython-314.pyc` artifacts). Verify new dependencies support 3.14 before adding.
+- **Python 3.14** in use locally (`cpython-314.pyc` artifacts). Verify new dependencies support 3.14 before adding. `pyproject.toml` uses `target-version = "py313"` for ruff (py314 not supported in ruff 0.8.4).
 - **`aioredis`** (used in `cache_service.py`) is the legacy standalone package, not the `redis` package's async interface. Keep this in mind if upgrading.
 - **`@app.on_event("startup/shutdown")`** is deprecated in FastAPI ≥ 0.93 — should migrate to `lifespan` context manager in a future block.
 - **No GitHub remote yet** — the monorepo at root has no remote. Create `alex0593/pokedex` and `git remote add origin ...` when ready to push.
-- **`TrustedHostMiddleware`** in `main.py` has a hardcoded `*.example.com` — update for actual domain before production.
+- **`TrustedHostMiddleware`** in `main.py` — update `ALLOWED_HOSTS` env var for actual domain before production.
 - **Backup snapshot** at `D:\Proyectos_Desarrollo\POKEDEX_backup_bloque1\` — do not touch.
+- **`@sentry/nextjs`** installed with `--legacy-peer-deps` (peer dep declares Next.js ≤15; runtime is compatible with 16).
+- **Sentry is opt-in** — no DSN = Sentry disabled, app starts normally. Backend: `SENTRY_DSN`. Frontend: `NEXT_PUBLIC_SENTRY_DSN`.
+- **Security headers** aplicados en `next.config.ts` (CSP, HSTS, X-Frame-Options…) y también en `backend/main.py` middleware.
+- **Backup script** en `scripts/backup.sh` — requiere Docker Compose activo; rota últimos 7 dumps.
 
 ## Memory Files
 
