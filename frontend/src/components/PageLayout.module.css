@@ -40,7 +40,7 @@
 /* Wrapper flex: 1 para que MiniNav ocupe el espacio disponible */
 .navCenter {
   flex: 1;
-  min-width: 0;   /* permite que el contenido haga overflow-x: auto */
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -50,6 +50,13 @@
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+}
+
+/* ── Auth desktop (oculto en móvil) ── */
+.authDesktop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .userName {
@@ -62,7 +69,6 @@
   white-space: nowrap;
 }
 
-/* Botones pill — tamaño compacto para caber en la barra */
 .logoutBtn {
   background: none;
   border: 1px solid rgba(255, 255, 255, 0.20);
@@ -99,13 +105,163 @@
   transform: translateY(-1px);
 }
 
-/* Slot opcional debajo del navRow (ej: controles del juego) */
+/* ── Hamburger (oculto en desktop) ── */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+}
+
+.hamburger:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.hamburger span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 2px;
+  transition: transform 0.25s ease, opacity 0.2s ease;
+  transform-origin: center;
+}
+
+/* Estado abierto: se convierte en ✕ */
+.hamburgerOpen span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburgerOpen span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburgerOpen span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ── Slot opcional debajo del navRow ── */
 .headerSlot {
   width: 100%;
   max-width: 1400px;
   display: flex;
   justify-content: center;
-  padding-bottom: 8px;
+  padding-bottom: 10px;
+}
+
+/* ── Backdrop del menú móvil ── */
+.menuBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 198;
+}
+
+/* ── Panel del menú móvil ── */
+.mobileMenu {
+  position: fixed;
+  /* Justo debajo del header flotante: top(10px) + padding(22px) + content + padding(22px) ≈ 100px */
+  top: 100px;
+  left: 16px;
+  right: 16px;
+  background: rgba(8, 8, 20, 0.97);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 20px;
+  z-index: 199;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.65);
+}
+
+/* Lista de enlaces */
+.mobileNavList {
+  list-style: none;
+  padding: 8px 0;
+  margin: 0;
+}
+
+.mobileNavLink {
+  display: block;
+  padding: 15px 24px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.68);
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease, padding-left 0.15s ease;
+  border-left: 3px solid transparent;
+}
+
+.mobileNavLink:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+/* Link activo: borde rojo + fondo sutil */
+.mobileNavLinkActive {
+  color: #ffffff;
+  font-weight: 700;
+  background: rgba(255, 62, 62, 0.10);
+  border-left-color: var(--primary-color, #ff3e3e);
+  padding-left: 21px; /* compensa el borde de 3px */
+}
+
+/* Sección de auth al final del menú */
+.mobileMenuAuth {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobileUserName {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--accent-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobileLogoutBtn {
+  background: rgba(255, 62, 62, 0.10);
+  border: 1px solid rgba(255, 62, 62, 0.28);
+  color: #ff7070;
+  padding: 9px 20px;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  white-space: nowrap;
+}
+
+.mobileLogoutBtn:hover {
+  background: rgba(255, 62, 62, 0.20);
+}
+
+.mobileLoginBtn {
+  width: 100%;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 13px;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.mobileLoginBtn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
 }
 
 /* ── Botón flotante "volver arriba" ── */
@@ -124,7 +280,7 @@
   font-weight: 900;
   cursor: pointer;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  transition: background 0.2s ease, transform 0.2s ease, opacity 0.3s ease;
+  transition: background 0.2s ease, transform 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -147,42 +303,36 @@
   margin-top: auto;
 }
 
-/* ── Responsive: tablet ── */
+/* ══════════════════════════════════════════════
+   RESPONSIVE — menú hamburguesa activo en móvil
+   ══════════════════════════════════════════════ */
 @media (max-width: 768px) {
-  .navLogo {
-    font-size: 0.82rem;
+  /* Ocultar nav horizontal y auth de escritorio */
+  .navCenter    { display: none; }
+  .authDesktop  { display: none; }
+
+  /* Mostrar hamburger */
+  .hamburger { display: flex; }
+
+  .navRow {
+    padding: 14px 0;
   }
 }
 
-/* ── Responsive: móvil ── */
 @media (max-width: 480px) {
   .stickyNav {
-    padding: 0 10px;
+    margin: 0 10px;
+    padding: 0 14px;
   }
 
-  .navRow {
-    gap: 6px;
-    padding: 12px 0;
-  }
-
-  /* Ocultar logo en móvil — la nav lo identifica */
   .navLogo {
-    display: none;
-  }
-
-  /* Ocultar nombre de usuario — solo mostrar el botón */
-  .userName {
-    display: none;
-  }
-
-  .logoutBtn {
-    padding: 5px 10px;
-    font-size: 1.18rem;
-  }
-
-  .loginBtn {
-    padding: 5px 12px;
     font-size: 1.2rem;
+  }
+
+  .mobileMenu {
+    top: 82px;
+    left: 10px;
+    right: 10px;
   }
 
   .backToTop {
