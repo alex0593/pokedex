@@ -115,3 +115,28 @@
     font-size: 1.5rem;
     cursor: pointer;
 }
+
+@media (max-width: 480px) {
+    .modal {
+        padding: 28px 18px 24px;
+        border-radius: 22px;
+        width: 96%;
+    }
+
+    .title {
+        font-size: 1.6rem;
+        margin-bottom: 22px;
+    }
+
+    .form {
+        gap: 16px;
+    }
+
+    .inputGroup input {
+        padding: 11px 14px;
+    }
+
+    .submitBtn {
+        padding: 13px;
+    }
+}

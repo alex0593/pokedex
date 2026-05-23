@@ -1,49 +1,91 @@
 .navBar {
     width: 100%;
-    margin-bottom: 25px;
+    max-width: 1400px;
+    margin: 0 auto;
     display: flex;
-    justify-content: center;
-    gap: 10px;
-    flex-wrap: wrap;
+    justify-content: flex-start;  /* alineado a la izquierda dentro del navCenter */
+    align-items: center;
+    gap: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 2px 0;
     z-index: 100;
 }
 
+.navBar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Separador · entre items */
+.sep {
+    color: rgba(255, 255, 255, 0.22);
+    font-size: 0.85rem;
+    user-select: none;
+    flex-shrink: 0;
+    padding: 0 3px;
+    line-height: 1;
+}
+
+/* Botón flat — sin fondo, sin borde, texto limpio */
 .navBtn {
-    background: var(--glass-bg, rgba(255, 255, 255, 0.05));
-    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
-    color: var(--text-color, #fff);
-    padding: 10px 18px;
-    border-radius: 50px;
-    font-size: 0.9rem;
-    font-weight: 700;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.62);
+    padding: 7px 12px;
+    font-size: 0.88rem;
+    font-weight: 600;
     cursor: pointer;
     text-decoration: none;
-    transition: var(--transition, all 0.3s ease);
+    transition: color 0.18s ease;
     display: flex;
     align-items: center;
-    gap: 8px;
-    backdrop-filter: blur(5px);
+    flex-shrink: 0;
+    white-space: nowrap;
+    position: relative;
+    letter-spacing: 0.01em;
 }
 
 .navBtn:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    color: #ffffff;
 }
 
+/* Active: texto blanco + underline rojo */
 .active {
-    background: var(--primary-color, #ff3e3e);
-    border-color: transparent;
-    box-shadow: 0 0 15px rgba(255, 62, 62, 0.4);
+    color: #ffffff;
+    font-weight: 700;
 }
 
-.active:hover {
-    background: #ff5e5e;
+.active::after {
+    content: '';
+    position: absolute;
+    bottom: 1px;
+    left: 12px;
+    right: 12px;
+    height: 2px;
+    background: var(--primary-color, #ff3e3e);
+    border-radius: 2px;
 }
 
 @media (max-width: 600px) {
     .navBtn {
-        padding: 8px 14px;
-        font-size: 0.8rem;
+        padding: 6px 8px;
+        font-size: 0.80rem;
+    }
+    .sep {
+        padding: 0 1px;
+        font-size: 0.78rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .navBtn {
+        padding: 5px 6px;
+        font-size: 0.74rem;
+    }
+    .sep {
+        padding: 0;
+        font-size: 0.72rem;
     }
 }

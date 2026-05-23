@@ -254,3 +254,55 @@
     0%, 100% { opacity: 1; }
     50%       { opacity: 0.5; }
 }
+
+@media (max-width: 480px) {
+    .container {
+        padding: 18px 14px;
+        border-radius: 20px;
+    }
+
+    .topBar {
+        margin-bottom: 18px;
+    }
+
+    .scoreBadge {
+        padding: 6px 12px;
+        font-size: 0.82rem;
+    }
+
+    .nextBtn {
+        padding: 6px 14px;
+        font-size: 0.82rem;
+    }
+
+    .timerContainer {
+        margin-bottom: 18px;
+    }
+
+    .imageWrapper {
+        width: 200px;
+        height: 200px;
+        margin-bottom: 20px;
+    }
+
+    .bgCircle {
+        width: 162px;
+        height: 162px;
+    }
+
+    .mysteryImage {
+        width: 180px;
+        height: 180px;
+    }
+
+    .message {
+        font-size: 1.2rem;
+        margin-bottom: 18px;
+    }
+
+    .optionBtn {
+        padding: 13px 10px;
+        font-size: 0.9rem;
+        border-radius: 14px;
+    }
+}

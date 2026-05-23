@@ -1,0 +1,227 @@
+.container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* ── Cabecera ── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 12px;
+}
+
+.backBtn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.65);
+  padding: 8px 18px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.backBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.regionTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.regionName {
+  font-size: 1.6rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.5px;
+  margin: 0;
+  color: #f0f0f2;
+}
+
+.badgeEarned {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #f59e0b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badgeProgress {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.48);
+}
+
+/* ── Barra de progreso de la región ── */
+.regionProgressBar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.regionProgressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  border-radius: 10px;
+  transition: width 0.6s ease;
+}
+
+/* ── Hint de login ── */
+.loginHint {
+  background: linear-gradient(160deg, #1c1a10 0%, #221f14 100%);
+  border: 1px solid rgba(255, 214, 0, 0.25);
+  border-left: 3px solid rgba(255, 214, 0, 0.55);
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: 0.83rem;
+  color: rgba(255, 255, 255, 0.72);
+  margin-bottom: 20px;
+}
+
+/* ── Grid de stages: 3 columnas ── */
+.stagesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+/* ── Tarjeta base ── */
+.stageCard {
+  position: relative;
+  background: linear-gradient(160deg, #16172e 0%, #1b1c38 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 3px solid rgba(255, 255, 255, 0.10);   /* neutral: sin intentos */
+  border-radius: 18px;
+  padding: 20px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  text-align: center;
+  transition: box-shadow 0.2s ease, transform 0.2s ease, background 0.2s ease;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.40);
+}
+
+.stageCard:hover {
+  background: linear-gradient(160deg, #1d1f3e 0%, #23254a 100%);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+}
+
+/* Estado: intentado pero no superado — borde ámbar */
+.stageAttempted {
+  border-top-color: rgba(245, 158, 11, 0.70);
+}
+
+.stageAttempted:hover {
+  box-shadow: 0 8px 28px rgba(245, 158, 11, 0.12);
+}
+
+/* Estado: completado — borde tipo-color */
+.stageCompleted {
+  border-top-color: var(--type-color, #22c55e);
+  background: linear-gradient(160deg, #141f1e 0%, #192420 100%);
+}
+
+.stageCompleted:hover {
+  background: linear-gradient(160deg, #1a2826 0%, #1f2e2c 100%);
+  box-shadow: 0 8px 28px rgba(34, 197, 94, 0.14);
+}
+
+/* Indicador de estado (esquina superior derecha) */
+.stateTag {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.typeEmoji {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.typeName {
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Mini barra de progreso */
+.progressBar {
+  width: 80%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.5s ease;
+}
+
+.attemptsText {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.42);
+  text-align: center;
+  line-height: 1.3;
+}
+
+@media (max-width: 600px) {
+  .stagesGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .regionName {
+    font-size: 1.3rem;
+  }
+
+  .stageCard {
+    padding: 16px 10px 14px;
+  }
+
+  .typeEmoji {
+    font-size: 1.6rem;
+  }
+
+  .typeName {
+    font-size: 0.82rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .container {
+    padding: 0 10px;
+  }
+
+  .stagesGrid {
+    gap: 8px;
+  }
+}

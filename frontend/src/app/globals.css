@@ -36,6 +36,16 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   line-height: 1.6;
+  /* Mobile: eliminar tap-highlight gris nativo */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Mobile base fixes ── */
+@media (max-width: 768px) {
+  /* background-attachment: fixed rompe en Safari/iOS — usar scroll */
+  body {
+    background-attachment: scroll;
+  }
 }
 
 /* Base Utility Animations */

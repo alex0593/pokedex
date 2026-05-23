@@ -1,92 +1,138 @@
-.header {
+/* ── Única barra sticky: logo | nav | auth ── */
+.stickyNav {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: rgba(4, 4, 14, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 30px 20px 20px;
-  gap: 20px;
 }
 
-.logoArea {
+/* Fila principal: logo | nav | auth */
+.navRow {
+  display: flex;
+  align-items: center;
   width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   max-width: 1400px;
-  flex-wrap: wrap;
-  gap: 15px;
+  gap: 12px;
+  padding: 7px 0;
 }
 
-.title {
-  font-size: 3rem;
+/* Logo compacto a la izquierda */
+.navLogo {
+  font-size: 0.88rem;
   font-weight: 900;
+  color: #f0f0f2;
   text-transform: uppercase;
-  letter-spacing: -2px;
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin: 0;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-/* Botón de login */
-.loginBtn {
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: var(--transition);
+/* Wrapper flex: 1 para que MiniNav ocupe el espacio disponible */
+.navCenter {
+  flex: 1;
+  min-width: 0;   /* permite que el contenido haga overflow-x: auto */
+  overflow: hidden;
 }
 
-.loginBtn:hover {
-  background: var(--primary-dark);
-  transform: translateY(-2px);
-}
-
-/* Estado de usuario logueado */
-.userStatus {
+/* Auth a la derecha */
+.navAuth {
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 8px 15px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .userName {
   color: var(--accent-color);
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+/* Botones pill — tamaño compacto para caber en la barra */
 .logoutBtn {
   background: none;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.20);
   color: #fff;
   padding: 5px 12px;
-  border-radius: 8px;
-  font-size: 0.8rem;
+  border-radius: 50px;
+  font-size: 0.78rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
+  white-space: nowrap;
 }
 
 .logoutBtn:hover {
-  background: rgba(255, 62, 62, 0.1);
-  border-color: var(--primary-color);
+  background: rgba(255, 62, 62, 0.12);
+  border-color: rgba(255, 62, 62, 0.55);
 }
 
-/* Slot adicional de header (ej: gameToggle) */
+.loginBtn {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-size: 0.80rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.loginBtn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+/* Slot opcional debajo del navRow (ej: controles del juego) */
 .headerSlot {
   width: 100%;
+  max-width: 1400px;
   display: flex;
   justify-content: center;
-  max-width: 1400px;
+  padding-bottom: 8px;
 }
 
-/* Footer */
+/* ── Botón flotante "volver arriba" ── */
+.backToTop {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  z-index: 500;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  font-size: 1.2rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  transition: background 0.2s ease, transform 0.2s ease, opacity 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.backToTop:hover {
+  background: var(--primary-dark);
+  transform: translateY(-3px);
+}
+
+/* ── Footer ── */
 .footer {
   text-align: center;
   padding: 30px 20px;
@@ -98,14 +144,54 @@
   margin-top: auto;
 }
 
+/* ── Responsive: tablet ── */
 @media (max-width: 768px) {
-  .title {
-    font-size: 2rem;
+  .navLogo {
+    font-size: 0.82rem;
+  }
+}
+
+/* ── Responsive: móvil ── */
+@media (max-width: 480px) {
+  .stickyNav {
+    padding: 0 10px;
   }
 
-  .logoArea {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+  .navRow {
+    gap: 6px;
+    padding: 6px 0;
+  }
+
+  /* Ocultar logo en móvil — la nav lo identifica */
+  .navLogo {
+    display: none;
+  }
+
+  /* Ocultar nombre de usuario — solo mostrar el botón */
+  .userName {
+    display: none;
+  }
+
+  .logoutBtn {
+    padding: 5px 10px;
+    font-size: 0.74rem;
+  }
+
+  .loginBtn {
+    padding: 5px 12px;
+    font-size: 0.76rem;
+  }
+
+  .backToTop {
+    bottom: 14px;
+    right: 14px;
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+
+  .footer {
+    padding: 20px 14px;
+    font-size: 0.72rem;
   }
 }

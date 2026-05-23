@@ -1,0 +1,497 @@
+/* ── Contenedor principal ── */
+.container {
+  background: linear-gradient(160deg, #16172e 0%, #1b1c38 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 24px 28px 28px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  animation: fadeIn 0.3s ease-out;
+  box-shadow: 0 8px 36px rgba(0, 0, 0, 0.50);
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── Cabecera del stage ── */
+.stageHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.backBtnSmall {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.60);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s ease, color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.backBtnSmall:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.stageBreadcrumb {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  overflow: hidden;
+}
+
+.regionLabel {
+  color: rgba(255, 255, 255, 0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.separator {
+  color: rgba(255, 255, 255, 0.22);
+}
+
+.typeLabel {
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.questionCounter {
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.qNum {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.qTotal {
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+/* ── Barra de progreso de stage ── */
+.stageProgress {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.stageProgressFill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.4s ease;
+}
+
+/* ── Contador de aciertos ── */
+.correctCounter {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: rgba(255, 255, 255, 0.70);
+}
+
+/* ── Timer ── */
+.timerContainer {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 3px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.timerBar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  transition: width 0.1s linear, background 0.3s ease;
+}
+
+.timerUrgent {
+  animation: timerPulse 0.5s ease-in-out infinite;
+}
+
+@keyframes timerPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* ── Área de juego ── */
+.gameArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.imageWrapper {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.bgCircle {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, var(--secondary-color) 0%, transparent 70%);
+  opacity: 0.25;
+  animation: rotate 10s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.mysteryImage {
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+  z-index: 1;
+  filter: brightness(0) drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: scale(0.9);
+}
+
+.revealed .mysteryImage {
+  filter: brightness(1) drop-shadow(0 0 30px rgba(255, 255, 255, 0.4));
+  transform: scale(1.1);
+}
+
+.revealed .bgCircle {
+  background: radial-gradient(circle, var(--accent-color) 0%, transparent 70%);
+  opacity: 0.4;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1);    opacity: 0.35; }
+  50%       { transform: scale(1.12); opacity: 0.55; }
+}
+
+.message {
+  font-size: 1.3rem;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 20px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  padding: 0 12px;
+}
+
+/* ── Opciones ── */
+.optionsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+}
+
+.optionBtn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: white;
+  padding: 14px;
+  border-radius: 50px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.optionBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.22);
+  transform: translateY(-2px);
+}
+
+.correct {
+  background: rgba(34, 197, 94, 0.25) !important;
+  border-color: #22c55e !important;
+  color: #4ade80 !important;
+}
+
+.wrong {
+  background: rgba(239, 68, 68, 0.20) !important;
+  border-color: #ef4444 !important;
+  color: #f87171 !important;
+  opacity: 0.8;
+}
+
+.shake {
+  animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px,  0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px,  0, 0); }
+}
+
+.successGlow {
+  animation: successGlow 1s ease-out;
+}
+
+@keyframes successGlow {
+  0%   { box-shadow: 0 0 0  0  rgba(34, 197, 94, 0.55); }
+  100% { box-shadow: 0 0 40px 20px rgba(34, 197, 94, 0); }
+}
+
+/* ── Botón siguiente ── */
+.nextHint {
+  margin-top: 20px;
+}
+
+.nextBtn {
+  background: transparent;
+  border: 2px solid var(--primary-color);
+  color: var(--primary-color);
+  padding: 10px 28px;
+  border-radius: 50px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.nextBtn:hover {
+  background: var(--primary-color);
+  color: white;
+}
+
+/* ── Pantalla de carga / error ── */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: rgba(255, 255, 255, 0.55);
+  gap: 16px;
+  text-align: center;
+  padding: 0 24px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.10);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Pantalla de resultado ── */
+.resultContainer {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.resultCard {
+  background: linear-gradient(160deg, #16172e 0%, #1b1c38 100%);
+  border: 2px solid rgba(255, 255, 255, 0.10);
+  border-radius: 24px;
+  padding: 40px 32px 36px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.55);
+}
+
+.resultEmoji {
+  font-size: 3.5rem;
+  margin-bottom: 12px;
+  animation: bounceIn 0.6s ease-out;
+}
+
+@keyframes bounceIn {
+  0%   { transform: scale(0); }
+  60%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.resultTitle {
+  font-size: 1.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.5px;
+  margin: 0 0 16px;
+}
+
+.resultScore {
+  font-size: 1rem;
+  margin-bottom: 20px;
+}
+
+.scoreNum {
+  font-size: 3rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.scoreDen {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.scoreLabel {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.regionBadge {
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.35);
+}
+
+.achievements {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.achTag {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 5px 14px;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.resultHint {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0 0 28px;
+}
+
+.resultActions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Botón reintentar: pill sólido */
+.retryBtn {
+  border: none;
+  color: white;
+  padding: 14px 24px;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.retryBtn:hover {
+  opacity: 0.85;
+  transform: translateY(-2px);
+}
+
+/* Botón volver: pill sutil */
+.backBtn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.65);
+  padding: 12px 24px;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.backBtn:hover {
+  background: rgba(255, 255, 255, 0.10);
+  color: #ffffff;
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 16px 14px 20px;
+    border-radius: 18px;
+  }
+
+  .imageWrapper {
+    width: 180px;
+    height: 180px;
+    margin-bottom: 14px;
+  }
+
+  .bgCircle {
+    width: 148px;
+    height: 148px;
+  }
+
+  .mysteryImage {
+    width: 162px;
+    height: 162px;
+  }
+
+  .message {
+    font-size: 1.1rem;
+    margin-bottom: 14px;
+  }
+
+  .optionBtn {
+    padding: 12px 8px;
+    font-size: 0.85rem;
+  }
+
+  .resultCard {
+    padding: 28px 20px 24px;
+    border-radius: 20px;
+  }
+
+  .resultEmoji {
+    font-size: 2.8rem;
+  }
+
+  .resultTitle {
+    font-size: 1.5rem;
+  }
+
+  .scoreNum {
+    font-size: 2.4rem;
+  }
+
+  .scoreDen {
+    font-size: 1.2rem;
+  }
+}

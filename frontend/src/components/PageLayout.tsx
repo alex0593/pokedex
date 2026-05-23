@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useAuth } from '../contexts/AuthContext';
 import { MiniNav } from './MiniNav';
@@ -12,60 +12,76 @@ const AuthModal = dynamic(
 );
 
 interface PageLayoutProps {
-  /** Contenido principal de la página (entre el header y el footer). */
+  /** Contenido principal de la página. */
   children: React.ReactNode;
   /**
-   * Slot opcional para insertar elementos adicionales en el header,
-   * debajo de MiniNav. Usado por game/page.tsx para el toggle Jugar/Mis Logros.
+   * Slot opcional debajo de la barra de nav.
+   * Usado por game/page.tsx para mostrar controles extra.
    */
   headerSlot?: React.ReactNode;
 }
 
 /**
- * Layout compartido para todas las páginas de catálogo y juego.
- * Provee header (título + auth + MiniNav) y footer comunes,
- * eliminando la duplicación que existía en las 6 páginas.
+ * Layout compartido: una única barra sticky (logo | nav | auth)
+ * + footer + botón "volver arriba".
  *
- * Usa useAuth() del AuthContext existente — NO gestiona auth state propia.
+ * El header no-sticky anterior fue eliminado para evitar el
+ * doble header en móvil.
  */
 export const PageLayout: React.FC<PageLayoutProps> = ({ children, headerSlot }) => {
   const { user, logout } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShowBackToTop(window.scrollY > 300);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
   return (
     <>
-      <header className={styles.header}>
-        <div className={styles.logoArea}>
-          <h1 className={styles.title}>POKEDEX PRO MAX</h1>
+      {/* ── Única barra sticky: logo | nav | auth ── */}
+      <header className={styles.stickyNav}>
+        <div className={styles.navRow}>
+          {/* Logo compacto — se oculta en pantallas muy pequeñas */}
+          <span className={styles.navLogo} aria-label="POKEDEX">POKÉDEX</span>
 
-          {user ? (
-            <div className={styles.userStatus}>
-              <span className={styles.userName}>Hola, {user}</span>
+          {/* Navegación central (scroll horizontal en móvil) */}
+          <div className={styles.navCenter}>
+            <MiniNav />
+          </div>
+
+          {/* Auth a la derecha */}
+          <div className={styles.navAuth}>
+            {user ? (
+              <>
+                <span className={styles.userName} title={`Sesión: ${user}`}>{user}</span>
+                <button
+                  onClick={logout}
+                  className={styles.logoutBtn}
+                  type="button"
+                >
+                  Salir
+                </button>
+              </>
+            ) : (
               <button
-                onClick={logout}
-                className={styles.logoutBtn}
+                onClick={() => setShowAuth(true)}
+                className={styles.loginBtn}
                 type="button"
               >
-                Cerrar Sesión
+                Entrar
               </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowAuth(true)}
-              className={styles.loginBtn}
-              type="button"
-            >
-              Entrar
-            </button>
-          )}
+            )}
+          </div>
         </div>
 
-        <MiniNav />
-
+        {/* Slot extra debajo del navRow (ej: controles del juego) */}
         {headerSlot && (
-          <div className={styles.headerSlot}>
-            {headerSlot}
-          </div>
+          <div className={styles.headerSlot}>{headerSlot}</div>
         )}
       </header>
 
@@ -75,13 +91,23 @@ export const PageLayout: React.FC<PageLayoutProps> = ({ children, headerSlot }) 
         <p>&copy; 2026 POKEDEX &bull; PRO MAX</p>
       </footer>
 
+      {/* Botón flotante "volver arriba" */}
+      {showBackToTop && (
+        <button
+          className={styles.backToTop}
+          onClick={scrollToTop}
+          type="button"
+          aria-label="Volver arriba"
+          title="Volver arriba"
+        >
+          ↑
+        </button>
+      )}
+
       {showAuth && (
         <AuthModal
           onClose={() => setShowAuth(false)}
           onSuccess={(username: string) => {
-            // AuthModal guardó el usuario en localStorage via authService.login.
-            // Disparamos un StorageEvent manualmente para notificar al AuthContext
-            // en la misma pestaña (el listener nativo solo se activa en otras pestañas).
             window.dispatchEvent(
               new StorageEvent('storage', { key: 'poke_user', newValue: username }),
             );

@@ -123,3 +123,128 @@
     font-style: italic;
     grid-column: 1 / -1;
 }
+
+/* ── Progreso por Regiones ── */
+.regionGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.regionCard {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 16px;
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+    transition: background 0.2s ease;
+}
+
+.regionConquered {
+    border-color: rgba(245, 158, 11, 0.4);
+    background: rgba(245, 158, 11, 0.06);
+}
+
+.regionCardHeader {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    justify-content: center;
+}
+
+.regionEmoji {
+    font-size: 1.2rem;
+}
+
+.regionName {
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.regionBadge {
+    font-size: 0.9rem;
+    filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.6));
+}
+
+.regionProgressBar {
+    width: 90%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.regionProgressFill {
+    height: 100%;
+    background: var(--accent-color);
+    border-radius: 10px;
+    transition: width 0.5s ease;
+}
+
+.regionProgressText {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 20px 14px;
+        border-radius: 20px;
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 14px;
+        margin-bottom: 28px;
+        padding-bottom: 18px;
+    }
+
+    .avatar {
+        width: 80px;
+        height: 80px;
+        font-size: 2.4rem;
+        border-width: 3px;
+    }
+
+    .userInfo h2 {
+        font-size: 1.6rem;
+    }
+
+    .statsGrid {
+        gap: 12px;
+        margin-bottom: 28px;
+    }
+
+    .statCard {
+        padding: 16px 12px;
+        border-radius: 16px;
+    }
+
+    .statVal {
+        font-size: 1.5rem;
+    }
+
+    .achievementsGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .regionGrid {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 10px;
+    }
+
+    .sectionTitle {
+        font-size: 1.05rem;
+    }
+}

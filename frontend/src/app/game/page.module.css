@@ -20,14 +20,12 @@
     margin-bottom: 10px;
 }
 
+/* Título: blanco plata, sin degradado */
 .title {
     font-size: 2.2rem;
     font-weight: 900;
     margin: 0;
-    background: linear-gradient(135deg, #fff 0%, #aaa 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: #f0f0f2;
     letter-spacing: -1px;
     text-transform: uppercase;
 }
@@ -36,10 +34,10 @@
     display: flex;
     align-items: center;
     gap: 15px;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 8px 15px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.06);
+    padding: 8px 16px;
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
 }
 
 .userName {
@@ -50,18 +48,19 @@
 
 .logoutBtn, .loginBtn {
     background: none;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     color: #fff;
-    padding: 5px 12px;
-    border-radius: 8px;
+    padding: 5px 16px;
+    border-radius: 50px;
     font-size: 0.8rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
 .logoutBtn:hover, .loginBtn:hover {
-    background: rgba(255, 62, 62, 0.1);
-    border-color: var(--primary-color);
+    background: rgba(255, 62, 62, 0.12);
+    border-color: rgba(255, 62, 62, 0.50);
 }
 
 .gameToggle {
@@ -69,16 +68,16 @@
     gap: 10px;
     background: rgba(255, 255, 255, 0.05);
     padding: 5px;
-    border-radius: 30px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .toggleBtn {
     background: none;
     border: none;
-    color: #aaa;
+    color: rgba(255, 255, 255, 0.50);
     padding: 8px 20px;
-    border-radius: 25px;
+    border-radius: 50px;
     cursor: pointer;
     font-weight: 700;
     transition: all 0.3s ease;
@@ -87,7 +86,7 @@
 .toggleBtn.active {
     background: var(--primary-color, #ff3e3e);
     color: #fff;
-    box-shadow: 0 4px 15px rgba(255, 62, 62, 0.3);
+    box-shadow: 0 4px 15px rgba(255, 62, 62, 0.30);
 }
 
 .gameWrapper {
@@ -106,6 +105,155 @@
     letter-spacing: 2px;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   Hub de selección de modo
+   ═══════════════════════════════════════════════════════════════ */
+.hubContainer {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+    padding: 20px 0;
+}
+
+/* Título con sombra fuerte para leer sobre el mapa SVG */
+.hubTitle {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #ffffff;
+    text-shadow:
+        0 2px 20px rgba(0, 0, 0, 0.95),
+        0 1px 6px  rgba(0, 0, 0, 1.00);
+    margin: 0 0 8px;
+}
+
+.hubSubtitle {
+    color: rgba(255, 255, 255, 0.85);
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.90);
+    font-size: 0.95rem;
+    margin: 0 0 36px;
+}
+
+.hubGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    justify-content: center;
+}
+
+/* ── Tarjeta base: gradiente sólido + borde top acento ── */
+.modeCard {
+    /* Gradiente oscuro 100% opaco — máxima legibilidad */
+    background: linear-gradient(160deg, #16172e 0%, #1b1c38 100%);
+    /* Borde fino lateral + borde superior de acento (azul-gris: modo libre / logros) */
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 3px solid rgba(160, 168, 220, 0.45);
+    border-radius: 20px;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.22s ease, transform 0.22s ease, background 0.22s ease;
+    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.50);
+}
+
+.modeCard:hover {
+    background: linear-gradient(160deg, #1d1f3e 0%, #23254a 100%);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.65);
+    transform: translateY(-3px);
+}
+
+/* Aventura por Regiones: borde top rojo */
+.modeCardAccent {
+    border-top: 3px solid rgba(255, 62, 62, 0.75);
+    background: linear-gradient(160deg, #1e1020 0%, #221428 100%);
+}
+
+.modeCardAccent:hover {
+    background: linear-gradient(160deg, #271430 0%, #2c1836 100%);
+    box-shadow: 0 10px 40px rgba(255, 62, 62, 0.20);
+}
+
+/* Logros / Perfil: borde top dorado */
+.modeCardLogros {
+    border-top: 3px solid rgba(255, 214, 0, 0.65);
+    background: linear-gradient(160deg, #1c1a10 0%, #221f14 100%);
+}
+
+.modeCardLogros:hover {
+    background: linear-gradient(160deg, #252212 0%, #2b2718 100%);
+    box-shadow: 0 10px 40px rgba(255, 214, 0, 0.12);
+}
+
+.modeIcon {
+    font-size: 2.8rem;
+    line-height: 1;
+}
+
+/* Títulos de tarjeta: blanco 100% Bold */
+.modeName {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #ffffff;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Descripción: blanco legible */
+.modeDesc {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.80);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.modeBadge {
+    background: var(--primary-color);
+    color: white;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 3px 12px;
+    border-radius: 50px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+}
+
+.loginHint {
+    margin-top: 28px;
+    color: rgba(255, 255, 255, 0.65);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.80);
+    font-size: 0.85rem;
+}
+
+/* ── Cabecera de vistas individuales ── */
+.viewHeader {
+    margin-bottom: 20px;
+}
+
+/* Botón volver: flat text con flecha */
+.hubBackBtn {
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.70);
+    padding: 8px 18px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.hubBackBtn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+}
+
 @media (max-width: 768px) {
     .logoArea {
         flex-direction: column;
@@ -113,5 +261,57 @@
     }
     .title {
         font-size: 1.6rem;
+    }
+    .hubGrid {
+        grid-template-columns: 1fr;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .gameWrapper {
+        margin: 16px auto;
+        padding: 0 12px;
+    }
+
+    .hubContainer {
+        padding: 12px 0;
+    }
+
+    .hubTitle {
+        font-size: 1.5rem;
+    }
+
+    .hubSubtitle {
+        font-size: 0.85rem;
+        margin-bottom: 24px;
+    }
+
+    .hubGrid {
+        max-width: 100%;
+        gap: 14px;
+    }
+
+    .modeCard {
+        padding: 22px 16px;
+        border-radius: 16px;
+    }
+
+    .modeIcon {
+        font-size: 2.2rem;
+    }
+
+    .modeName {
+        font-size: 1rem;
+    }
+
+    .modeDesc {
+        font-size: 0.78rem;
+    }
+
+    .hubBackBtn {
+        padding: 7px 14px;
+        font-size: 0.82rem;
     }
 }
