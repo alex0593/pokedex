@@ -1,15 +1,16 @@
 import asyncio
-import pytest
 import os
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+
+import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 os.environ['CORS_ORIGINS'] = 'http://localhost:3000'
 os.environ['SECRET_KEY'] = 'test-secret-key-12345'
 os.environ['DATABASE_URL'] = 'sqlite+aiosqlite:///:memory:'
 
-from main import app
 from database import Base, get_db
+from main import app
 
 
 @pytest.fixture(scope='session')

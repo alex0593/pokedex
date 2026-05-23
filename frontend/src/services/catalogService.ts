@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// Las respuestas del backend/PokeAPI son estructuras dinámicas que se transforman
+// sobre la marcha (añadir/mutar campos como sprites, effect_entries, etc.).
+// Usar Record<string, unknown> requeriría casts ubicuos y haría el código ilegible.
+// Se desactiva no-explicit-any exclusivamente en este archivo de servicio.
 import { ItemDetail, BerryDetail, AbilityDetail, MoveDetail } from '../types/catalog';
 import { apiClient } from '../lib/apiClient';
 import { catalogCache } from '../lib/cache';

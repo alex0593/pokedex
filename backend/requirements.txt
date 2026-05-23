@@ -36,3 +36,4 @@ cryptography==46.0.5
 # Observability
 python-json-logger==2.0.7
 slowapi==0.1.9
+sentry-sdk[fastapi]>=2.0.0,<3.0.0

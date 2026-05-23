@@ -1,5 +1,3 @@
-import { apiClient } from '../lib/apiClient';
-
 export interface UserStats {
     total_answers: number;
     correct_answers: number;

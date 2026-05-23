@@ -1,7 +1,7 @@
 import logging
-import json
-from pythonjsonlogger import jsonlogger
 import sys
+
+from pythonjsonlogger import jsonlogger
 
 
 def setup_json_logging(app_name: str = "pokedex"):

@@ -48,7 +48,6 @@ export const BaseModal: React.FC<BaseModalProps> = ({ isOpen, onClose, title, ch
             onClick={handleOverlayClick}
             ref={overlayRef}
             role="presentation"
-            aria-modal="true"
         >
             <div
                 className={styles.modal}

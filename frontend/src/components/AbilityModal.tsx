@@ -49,8 +49,8 @@ export const AbilityModal: React.FC<AbilityModalProps> = ({ ability, onClose }) 
 
                 <h4 className={styles.sectionTitle}>Pokémon con esta habilidad</h4>
                 <div className={styles.pokemonGrid}>
-                    {ability.pokemon?.map(p => (
-                        <div key={p.pokemon?.name || Math.random()} className={styles.pokemonItem}>
+                    {ability.pokemon?.map((p, idx) => (
+                        <div key={p.pokemon?.name ?? `ability-pokemon-${idx}`} className={styles.pokemonItem}>
                             <span className={styles.pokemonName}>{(p.pokemon?.name || '').replace('-', ' ')}</span>
                             {p.is_hidden && <span className={styles.hiddenTag}>Oculta</span>}
                         </div>

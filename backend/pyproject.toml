@@ -10,7 +10,9 @@ requires-python = ">=3.14"
 
 [tool.ruff]
 line-length = 100
-target-version = "py314"
+target-version = "py313"
+
+[tool.ruff.lint]
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -22,9 +24,11 @@ select = [
 ignore = [
     "E501",  # line too long (handled by line-length)
     "E701",  # multiple statements on one line
+    # B008: FastAPI usa Depends() en defaults de argumentos; es el patrón oficial.
+    "B008",
 ]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["services", "routers", "models", "database", "utils"]
 
 [tool.pytest.ini_options]

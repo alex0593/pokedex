@@ -1,7 +1,7 @@
 import json
 import logging
 from datetime import timedelta
-from typing import Any, Generic, Optional, TypeVar
+from typing import Any, Optional, TypeVar
 
 import aioredis
 from aioredis import Redis

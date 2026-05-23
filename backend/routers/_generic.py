@@ -1,6 +1,8 @@
 import logging
+
 import httpx
 from fastapi import APIRouter, HTTPException, Query, Response
+
 from services.pokeapi_service import PokeAPIService
 
 
@@ -31,7 +33,7 @@ def make_catalog_router(entity_type: str, entity_display_name: str = None) -> AP
             return data
         except (httpx.HTTPError, httpx.TimeoutException, ValueError) as e:
             logger.error(f"Error fetching {entity_type}s: {e}", exc_info=True)
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e)) from e
 
     @router.get("/batch")
     async def get_batch(
@@ -47,7 +49,7 @@ def make_catalog_router(entity_type: str, entity_display_name: str = None) -> AP
             return data
         except (httpx.HTTPError, httpx.TimeoutException, ValueError) as e:
             logger.error(f"Error fetching {entity_type}s batch: {e}", exc_info=True)
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e)) from e
 
     @router.get("/{name_or_id}")
     async def get_detail(name_or_id: str, response: Response = None):
@@ -60,6 +62,6 @@ def make_catalog_router(entity_type: str, entity_display_name: str = None) -> AP
             return result
         except (httpx.HTTPError, httpx.TimeoutException, ValueError) as e:
             logger.error(f"Error fetching {entity_type} detail for {name_or_id}: {e}", exc_info=True)
-            raise HTTPException(status_code=404, detail=f"{entity_display_name} not found")
+            raise HTTPException(status_code=404, detail=f"{entity_display_name} not found") from e
 
     return router

@@ -27,19 +27,31 @@ export function useTriviaGame(): TriviaGameState & TriviaGameActions {
     const [quiz, setQuiz] = useState<QuizData | null>(null);
     const [revealed, setRevealed] = useState(false);
     const [score, setScore] = useState(0);
-    const [highScore, setHighScore] = useState(0);
+    // Inicializar desde localStorage en el primer render (lazy init evita el effect impuro)
+    const [highScore, setHighScore] = useState<number>(() => {
+        if (typeof window === 'undefined') return 0;
+        const saved = localStorage.getItem('pokeHighScore');
+        return saved ? parseInt(saved, 10) : 0;
+    });
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState('¿Quién es este Pokémon?');
     const [lastSelected, setLastSelected] = useState<string | null>(null);
     const [timeLeft, setTimeLeft] = useState(10);
 
+    // Refs for stable latest values (avoid stale closures)
     const quizRef = useRef<QuizData | null>(null);
     const nextQuizRef = useRef<QuizData | null>(null);
     const revealedRef = useRef(false);
     const scoreRef = useRef(0);
-    const highScoreRef = useRef(0);
+    // highScoreRef se sincroniza con el estado; el valor inicial se carga desde useState
+    const highScoreRef = useRef(highScore);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const autoNextRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Refs to break the circular useCallback dependency chain:
+    // startTimer → handleGuess → handleNext → initGame → startTimer
+    const handleGuessRef = useRef<((name: string) => void) | null>(null);
+    const handleNextRef = useRef<(() => Promise<void>) | null>(null);
 
     useEffect(() => { quizRef.current = quiz; }, [quiz]);
     useEffect(() => { revealedRef.current = revealed; }, [revealed]);
@@ -51,6 +63,7 @@ export function useTriviaGame(): TriviaGameState & TriviaGameActions {
         if (autoNextRef.current) { clearTimeout(autoNextRef.current); autoNextRef.current = null; }
     }, []);
 
+    // startTimer calls handleGuessRef (not handleGuess directly) to avoid circular dep
     const startTimer = useCallback(() => {
         stopAllTimers();
         setTimeLeft(10);
@@ -61,7 +74,7 @@ export function useTriviaGame(): TriviaGameState & TriviaGameActions {
                     clearInterval(timerRef.current!);
                     timerRef.current = null;
                     if (!revealedRef.current) {
-                        handleGuess('timeout');
+                        handleGuessRef.current?.('timeout');
                     }
                     return 0;
                 }
@@ -90,13 +103,13 @@ export function useTriviaGame(): TriviaGameState & TriviaGameActions {
         }
     }, [stopAllTimers, startTimer]);
 
+    // handleGuess calls handleNextRef (not handleNext directly) to avoid circular dep
     const handleGuess = useCallback((name: string) => {
         if (revealedRef.current) return;
         const currentQuiz = quizRef.current;
         if (!currentQuiz) return;
 
         stopAllTimers();
-
         setRevealed(true);
         revealedRef.current = true;
         setLastSelected(name);
@@ -119,7 +132,7 @@ export function useTriviaGame(): TriviaGameState & TriviaGameActions {
             const username = getLoggedUser();
             if (username) saveGameResult(username, true, newScore);
 
-            autoNextRef.current = setTimeout(() => handleNext(), 1800);
+            autoNextRef.current = setTimeout(() => handleNextRef.current?.(), 1800);
         } else {
             setScore(0);
             scoreRef.current = 0;
@@ -133,7 +146,7 @@ export function useTriviaGame(): TriviaGameState & TriviaGameActions {
             const username = getLoggedUser();
             if (username) saveGameResult(username, false, 0);
 
-            autoNextRef.current = setTimeout(() => handleNext(), 3000);
+            autoNextRef.current = setTimeout(() => handleNextRef.current?.(), 3000);
         }
     }, [stopAllTimers]);
 
@@ -158,18 +171,13 @@ export function useTriviaGame(): TriviaGameState & TriviaGameActions {
         }
     }, [stopAllTimers, startTimer, initGame]);
 
-    useEffect(() => {
-        const savedHigh = localStorage.getItem('pokeHighScore');
-        if (savedHigh) {
-            const val = parseInt(savedHigh);
-            setHighScore(val);
-            highScoreRef.current = val;
-        }
-        initGame();
+    // Keep circular refs up to date after each render
+    useEffect(() => { handleGuessRef.current = handleGuess; });
+    useEffect(() => { handleNextRef.current = handleNext; });
 
-        return () => {
-            stopAllTimers();
-        };
+    useEffect(() => {
+        initGame(); // eslint-disable-line react-hooks/set-state-in-effect -- patrón correcto de inicialización async
+        return () => { stopAllTimers(); };
     }, [initGame, stopAllTimers]);
 
     return {

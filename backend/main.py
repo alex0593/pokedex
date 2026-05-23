@@ -1,25 +1,57 @@
-import os
 import logging
+import os
+
+import sentry_sdk
+import uvicorn
+from dotenv import load_dotenv
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.staticfiles import StaticFiles
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.starlette import StarletteIntegration
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
-from fastapi.exceptions import RequestValidationError
-from dotenv import load_dotenv
-from routers import pokemon, types, user, stats, moves, abilities, items, berries, locations, evolutions
-from database import engine, Base
+
+from database import Base, engine
+from routers import (
+    abilities,
+    berries,
+    evolutions,
+    items,
+    locations,
+    moves,
+    pokemon,
+    stats,
+    types,
+    user,
+)
 from utils.logging_config import setup_json_logging
-import uvicorn
 
 load_dotenv()
 
-# Configure logging
+# Configure logging (antes que Sentry para poder loguear el resultado del init)
 logger = setup_json_logging("pokedex")
 logging.getLogger("uvicorn").handlers.clear()
 logging.getLogger("uvicorn.access").handlers.clear()
+
+# Sentry — monitoreo de errores en producción (opcional).
+# Solo se activa si SENTRY_DSN está definido en .env; sin él la app arranca igualmente.
+_sentry_dsn = os.getenv("SENTRY_DSN")
+if _sentry_dsn:
+    sentry_sdk.init(
+        dsn=_sentry_dsn,
+        integrations=[
+            StarletteIntegration(transaction_style="endpoint"),
+            FastApiIntegration(transaction_style="endpoint"),
+        ],
+        traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1")),
+        environment=os.getenv("ENVIRONMENT", "development"),
+        send_default_pii=False,  # GDPR: no enviar IPs ni usuarios por defecto
+    )
+    logger.info("Sentry initialized", extra={"environment": os.getenv("ENVIRONMENT", "development")})
+else:
+    logger.info("Sentry DSN not configured — error tracking disabled")
 
 app = FastAPI(
     title="Pokedex API - Backend PokeAPI",
@@ -81,7 +113,6 @@ async def health_check():
 # Initialize Database tables and Cache
 @app.on_event("startup")
 async def startup():
-    from services.pokeapi_service import PokeAPIService
     from services.cache_service import CacheService
 
     # 1. Initialize Cache Service
@@ -100,8 +131,8 @@ async def startup():
 # Clean up resources
 @app.on_event("shutdown")
 async def shutdown():
-    from services.pokeapi_service import PokeAPIService
     from services.cache_service import CacheService
+    from services.pokeapi_service import PokeAPIService
 
     await PokeAPIService.close()
     try:

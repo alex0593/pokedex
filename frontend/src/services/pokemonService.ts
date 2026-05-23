@@ -18,8 +18,8 @@ export async function fetchPokemons(
     const cached = catalogCache.get(cacheKey) as PokemonSummary[] | undefined;
     if (cached) return cached;
 
-    const data = await apiClient<any>(`/pokemon/?${cacheKey}`);
-    const rawResults = Array.isArray(data) ? data : (data.results || []);
+    const data = await apiClient<{ results?: PokemonSummary[] }>(`/pokemon/?${cacheKey}`);
+    const rawResults = data.results ?? [];
 
     if (rawResults.length === 0) return [];
 
