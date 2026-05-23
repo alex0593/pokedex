@@ -104,10 +104,26 @@
   filter: drop-shadow(0 0 6px rgba(255, 200, 0, 0.55));
 }
 
-.regionEmoji {
-  font-size: 2.4rem;
-  line-height: 1;
-  margin-bottom: 2px;
+/* Contenedor del sprite del legendario mascota */
+.mascotWrapper {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+/* Imagen del mascota: objeto ajustado, sin interpolación pixelada */
+.mascotImg {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.regionCard:hover .mascotImg {
+  transform: scale(1.12);
 }
 
 .regionLabel {
@@ -160,8 +176,10 @@
     font-size: 1.4rem;
   }
 
-  .regionEmoji {
-    font-size: 2rem;
+  .mascotWrapper,
+  .mascotImg {
+    width: 52px;
+    height: 52px;
   }
 
   .header {
@@ -185,8 +203,10 @@
     padding: 0 10px;
   }
 
-  .regionEmoji {
-    font-size: 1.7rem;
+  .mascotWrapper,
+  .mascotImg {
+    width: 44px;
+    height: 44px;
   }
 
   .regionLabel {
