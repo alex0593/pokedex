@@ -6,26 +6,26 @@ import { withSentryConfig } from "@sentry/nextjs";
 // En desarrollo local usa localhost:8000.
 const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
 
-// Content Security Policy
-// Todas las llamadas al API van a /api/... (mismo origen) gracias al proxy.
-// 'self' cubre todas las llamadas al backend proxiadas.
+// Content Security Policy — diferente según el entorno.
 //
-// connect-src notas:
-//   - 'self'             → todas las llamadas API proxiadas (/api/*) + WebSockets de HMR
-//   - https:             → Sentry ingest + cualquier recurso externo HTTPS
-//   - ws://localhost:*   → WebSocket de HMR en desarrollo (Next.js fast refresh)
-//   - wss:               → WebSockets seguros en producción
+// DESARROLLO: permisiva para WebSockets de HMR y conexiones locales.
+//   - ws: / wss:           → HMR de Next.js/Turbopack desde cualquier IP (Tailscale, LAN)
+//   - http://localhost:*   → fallback por si alguna herramienta de dev conecta directo
 //
-// style-src / font-src notas:
-//   - globals.css importa Outfit + Fira Code vía @import url(fonts.googleapis.com)
-//   - fonts.gstatic.com sirve los archivos de fuente reales
+// PRODUCCIÓN: estricta, solo HTTPS/WSS (las llamadas API van a /api/ = mismo origen).
+//
+// style-src / font-src: globals.css importa Outfit + Fira Code vía fonts.googleapis.com.
+const isDev = process.env.NODE_ENV !== "production";
+
 const cspDirectives = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob: https://raw.githubusercontent.com",
   "font-src 'self' https://fonts.gstatic.com",
-  "connect-src 'self' https: ws://localhost:* wss:",
+  isDev
+    ? "connect-src 'self' http://localhost:* https: ws: wss:"
+    : "connect-src 'self' https: wss:",
   "frame-ancestors 'none'",
 ].join("; ");
 
