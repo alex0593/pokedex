@@ -8,7 +8,7 @@ module.exports = {
       name: 'pokedex-frontend',
       cwd: './frontend',
       script: 'node_modules/.bin/next',
-      args: 'start --port 3000',
+      args: 'start --port 4003',
       instances: 1,          // 1 instancia — aumentar solo con DB de sesiones
       exec_mode: 'fork',
       watch: false,

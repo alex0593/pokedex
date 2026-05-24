@@ -54,7 +54,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "127.0.0.1:8000:8000"   # solo accesible desde localhost (Nginx/Next.js)
+      - "127.0.0.1:4004:8000"   # solo accesible desde localhost (Nginx proxia /api/* aquí)
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-pokedex}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
