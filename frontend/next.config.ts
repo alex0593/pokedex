@@ -1,11 +1,6 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
-// URL del backend — usada SOLO en el servidor Next.js para las rewrites de proxy.
-// NO se expone al navegador. En Docker usa el nombre de servicio interno.
-// En desarrollo local usa localhost:8000.
-const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
-
 // Content Security Policy — diferente según el entorno.
 //
 // DESARROLLO: permisiva para WebSockets de HMR y conexiones locales.
@@ -50,19 +45,6 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
-  },
-
-  // ── Proxy al backend ──────────────────────────────────────────────────────────
-  // Todas las llamadas a /api/:path* se redirigen al backend en el SERVIDOR de
-  // Next.js. El navegador solo ve la misma origin (no hay CORS ni localhost issues).
-  // Funciona desde cualquier dispositivo: móvil, tablet, PC.
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${backendUrl}/:path*`,
-      },
-    ];
   },
 
   // Security headers aplicados a todas las rutas
