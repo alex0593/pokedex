@@ -79,3 +79,25 @@
     font-size: 0.76rem;
     font-weight: 700;
 }
+
+@media (max-width: 480px) {
+    .card {
+        padding: 14px;
+    }
+    .name {
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
+    .effect {
+        font-size: 0.8rem;
+    }
+    .idBadge {
+        font-size: 0.76rem;
+        top: 10px;
+        right: 10px;
+    }
+    .badge {
+        padding: 3px 8px;
+        font-size: 0.65rem;
+    }
+}

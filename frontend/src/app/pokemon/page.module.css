@@ -178,12 +178,71 @@
   gap: 12px;
 }
 
+/* Header del filtro: toggle + borrar */
+.filterHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Botón toggle "Filtros ▾" */
+.filterToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
 .filterLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.82rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: rgba(255, 255, 255, 0.45);
+}
+
+/* Badge con el conteo de filtros activos */
+.filterCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-color);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  line-height: 1;
+}
+
+/* Flecha toggle */
+.filterArrow {
+  color: rgba(255, 255, 255, 0.40);
+  font-size: 1rem;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+.filterArrowOpen {
+  transform: rotate(180deg);
+}
+
+/* Botón "BORRAR TODO" */
+.clearBtn {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0;
 }
 
 .chipsContainer {

@@ -84,3 +84,31 @@
     font-weight: 700;
     color: #fff;
 }
+
+@media (max-width: 480px) {
+    .card {
+        padding: 14px;
+    }
+    .name {
+        font-size: 1.1rem;
+    }
+    .typeBadge {
+        padding: 3px 8px;
+        font-size: 0.68rem;
+    }
+    .statsGrid {
+        gap: 8px;
+        padding: 8px;
+    }
+    .statLabel {
+        font-size: 0.6rem;
+    }
+    .statValue {
+        font-size: 0.83rem;
+    }
+    .idBadge {
+        font-size: 0.76rem;
+        top: 10px;
+        right: 10px;
+    }
+}

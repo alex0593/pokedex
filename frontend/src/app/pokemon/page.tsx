@@ -39,6 +39,7 @@ export default function Pokedex() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [selectedPokemon, setSelectedPokemon] = useState<PokemonDetail | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(true);
 
   const triggerRef = useRef<HTMLDivElement>(null);
   const { toasts, showError, dismiss } = useToast();
@@ -150,12 +151,25 @@ export default function Pokedex() {
           </div>
 
           <div className={styles.filterSection}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-              <span className={styles.filterLabel}>Filtros</span>
+            <div className={styles.filterHeader}>
+              <button
+                className={styles.filterToggle}
+                onClick={() => setFiltersOpen(v => !v)}
+                type="button"
+                aria-expanded={filtersOpen}
+              >
+                <span className={styles.filterLabel}>
+                  Filtros
+                  {selectedTypes.length > 0 && (
+                    <span className={styles.filterCount}>{selectedTypes.length}</span>
+                  )}
+                </span>
+                <span className={`${styles.filterArrow} ${filtersOpen ? styles.filterArrowOpen : ''}`}>▾</span>
+              </button>
               {(selectedTypes.length > 0 || searchTerm) && (
                 <button
                   onClick={clearFilters}
-                  style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}
+                  className={styles.clearBtn}
                   type="button"
                 >
                   BORRAR TODO
@@ -163,26 +177,28 @@ export default function Pokedex() {
               )}
             </div>
 
-            <div className={styles.chipsContainer}>
-              {types.map(type => {
-                const active = selectedTypes.includes(type);
-                return (
-                  <button
-                    key={type}
-                    className={`${styles.chip} ${active ? styles.chipActive : ''}`}
-                    onClick={() => toggleType(type)}
-                    style={
-                      active
-                        ? { backgroundColor: getTypeBgColor(type), borderColor: getTypeBgColor(type), color: '#fff' }
-                        : { borderColor: getTypeTextColor(type), color: getTypeTextColor(type) }
-                    }
-                    type="button"
-                  >
-                    {translate(type, 'types')}
-                  </button>
-                );
-              })}
-            </div>
+            {filtersOpen && (
+              <div className={styles.chipsContainer}>
+                {types.map(type => {
+                  const active = selectedTypes.includes(type);
+                  return (
+                    <button
+                      key={type}
+                      className={`${styles.chip} ${active ? styles.chipActive : ''}`}
+                      onClick={() => toggleType(type)}
+                      style={
+                        active
+                          ? { backgroundColor: getTypeBgColor(type), borderColor: getTypeBgColor(type), color: '#fff' }
+                          : { borderColor: getTypeTextColor(type), color: getTypeTextColor(type) }
+                      }
+                      type="button"
+                    >
+                      {translate(type, 'types')}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
 

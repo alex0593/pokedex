@@ -316,6 +316,7 @@
 
   .navRow {
     padding: 14px 0;
+    justify-content: space-between;  /* logo izquierda, hamburger derecha */
   }
 }
 
