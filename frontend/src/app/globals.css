@@ -1,5 +1,5 @@
 /* Design Tokens & Base Styles */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Fira+Code:wght@400;500&display=swap');
+/* Outfit y Fira Code se cargan vía next/font en layout.tsx — sin @import bloqueante */
 
 :root {
   --primary-color: #ff3e3e;
@@ -14,7 +14,7 @@
   --glass-border: rgba(255, 255, 255, 0.08);
   --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
-  --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-main: var(--font-outfit), 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 

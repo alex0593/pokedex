@@ -10,6 +10,8 @@ interface PokemonCardProps {
     onClick: (nameOrId: string | number) => void;
     isFavorite?: boolean;
     onToggleFavorite?: (e: React.MouseEvent) => void;
+    /** Índice en el grid — los primeros N se cargan con priority para LCP */
+    index?: number;
 }
 
 export const PokemonCard: React.FC<PokemonCardProps> = ({
@@ -17,8 +19,11 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
     onClick,
     isFavorite,
     onToggleFavorite,
+    index = 99,
 }) => {
     const mainType = pokemon.types[0];
+    // Los primeros 8 cards son above-the-fold → priority=true genera <link rel="preload">
+    const isPriority = index < 8;
 
     return (
         <div
@@ -41,6 +46,8 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                     width={120}
                     height={120}
                     unoptimized={pokemon.image.endsWith('.gif')}
+                    priority={isPriority}
+                    loading={isPriority ? 'eager' : 'lazy'}
                 />
             </div>
             <h3 className={styles.name}>{pokemon.name}</h3>

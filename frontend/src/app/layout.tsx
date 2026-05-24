@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Outfit, Fira_Code } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../contexts/AuthContext";
 import { FavoritesProvider } from "../contexts/FavoritesContext";
@@ -7,11 +7,28 @@ import { FavoritesProvider } from "../contexts/FavoritesContext";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
+});
+
+// Fuentes de diseño — cargadas por next/font (sin @import bloqueante)
+const outfit = Outfit({
+  variable: "--font-outfit",
+  subsets: ["latin"],
+  weight: ["300", "400", "600", "800"],
+  display: "swap",
+});
+
+const firaCode = Fira_Code({
+  variable: "--font-fira-code",
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -34,7 +51,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <head>
+        {/* Preconnect a raw.githubusercontent.com — dominio de las imágenes Pokémon */}
+        <link rel="preconnect" href="https://raw.githubusercontent.com" />
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} ${firaCode.variable}`}>
         <AuthProvider>
           <FavoritesProvider>
             {children}

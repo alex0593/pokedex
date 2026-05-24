@@ -222,11 +222,16 @@ export default function Pokedex() {
                   key={pokemon.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.5) }}
+                  transition={{
+                    duration: 0.25,
+                    // Los primeros 8 (above-the-fold) sin delay para no bloquear LCP
+                    delay: index < 8 ? 0 : Math.min((index - 8) * 0.04, 0.3),
+                  }}
                 >
                   <PokemonCard
                     pokemon={pokemon}
                     onClick={openDetail}
+                    index={index}
                     isFavorite={user ? isFavorite('pokemon', pokemon.name.toLowerCase()) : undefined}
                     onToggleFavorite={user ? () => toggle('pokemon', pokemon.name.toLowerCase(), pokemon.id) : undefined}
                   />
