@@ -1,8 +1,10 @@
 import logging
+from datetime import timedelta
 
 import httpx
 from fastapi import APIRouter, HTTPException, Query, Response
 
+from services.cache_service import CacheService
 from services.pokeapi_service import PokeAPIService
 
 
@@ -21,7 +23,7 @@ def make_catalog_router(
             se genera como "/{entity_type}s" (funciona bien para formas regulares).
 
     Returns:
-        APIRouter con 3 endpoints: list, batch, detail
+        APIRouter con 3 endpoints: list, batch, detail — todos con Redis cache.
     """
     if not entity_display_name:
         entity_display_name = entity_type.capitalize()
@@ -30,11 +32,34 @@ def make_catalog_router(
     logger = logging.getLogger(f"routers.{entity_type}")
     router = APIRouter(prefix=prefix, tags=[entity_display_name + "s"])
 
+    # TTLs
+    LIST_TTL   = timedelta(hours=1)    # listas paginadas cambian poco
+    DETAIL_TTL = timedelta(hours=24)   # detalles son estables
+
+    def _cache():
+        """Acceso defensivo al singleton — devuelve None si no está inicializado."""
+        try:
+            return CacheService.get_instance()
+        except RuntimeError:
+            return None
+
     @router.get("/")
     async def list_entities(limit: int = 25, offset: int = 0, response: Response = None):
-        """Lista paginada de entidades."""
+        """Lista paginada de entidades (con cache Redis 1 h)."""
+        cache_key = f"catalog:{entity_type}:list:{limit}:{offset}"
+        cache = _cache()
+
+        if cache:
+            cached = await cache.get(cache_key)
+            if cached is not None:
+                if response:
+                    response.headers['Cache-Control'] = 'public, max-age=3600'
+                return cached
+
         try:
             data = await PokeAPIService.get_generic_data(entity_type, limit, offset)
+            if cache:
+                await cache.set(cache_key, data, LIST_TTL)
             if response:
                 response.headers['Cache-Control'] = 'public, max-age=3600'
             return data
@@ -47,10 +72,27 @@ def make_catalog_router(
         names: str = Query(..., description="Nombres o IDs separados por coma"),
         response: Response = None
     ):
-        """Obtener múltiples entidades a la vez."""
+        """Obtener múltiples entidades a la vez (con cache Redis 24 h por nombre)."""
+        id_list = [id.strip() for id in names.split(",") if id.strip()]
+        cache = _cache()
+
+        # Intentar servir todo desde caché
+        if cache:
+            cache_keys = [f"catalog:{entity_type}:detail:{name}" for name in id_list]
+            cached_items = [await cache.get(k) for k in cache_keys]
+            if all(v is not None for v in cached_items):
+                if response:
+                    response.headers['Cache-Control'] = 'public, max-age=3600'
+                return cached_items
+
         try:
-            id_list = [id.strip() for id in names.split(",")]
             data = await PokeAPIService.get_generic_batch(entity_type, id_list)
+            # Guardar cada ítem en caché para que el detail endpoint también lo aproveche
+            if cache:
+                for item in data:
+                    item_name = item.get("original_name") or item.get("name", "").lower()
+                    if item_name:
+                        await cache.set(f"catalog:{entity_type}:detail:{item_name}", item, DETAIL_TTL)
             if response:
                 response.headers['Cache-Control'] = 'public, max-age=3600'
             return data
@@ -60,10 +102,22 @@ def make_catalog_router(
 
     @router.get("/{name_or_id}")
     async def get_detail(name_or_id: str, response: Response = None):
-        """Obtener detalles de una entidad específica."""
+        """Obtener detalles de una entidad específica (con cache Redis 24 h)."""
+        cache_key = f"catalog:{entity_type}:detail:{name_or_id.lower()}"
+        cache = _cache()
+
+        if cache:
+            cached = await cache.get(cache_key)
+            if cached is not None:
+                if response:
+                    response.headers['Cache-Control'] = 'public, max-age=86400'
+                return cached
+
         try:
             data = await PokeAPIService.get_generic_detail(entity_type, name_or_id)
             result = PokeAPIService.transform_generic(data, entity_type)
+            if cache:
+                await cache.set(cache_key, result, DETAIL_TTL)
             if response:
                 response.headers['Cache-Control'] = 'public, max-age=86400'
             return result
