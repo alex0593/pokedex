@@ -27,6 +27,12 @@ const cspDirectives = [
 const nextConfig: NextConfig = {
   reactCompiler: true,
 
+  // Turbopack es el bundler por defecto en Next.js 16.
+  // withSentryConfig añade una config de webpack — sin declarar turbopack explícitamente,
+  // Next.js lanza un error de build. El objeto vacío le dice: "sé que uso Turbopack, ok".
+  // Sentry no soporta Turbopack aún, pero como no hay SENTRY_DSN en prod queda inactivo.
+  turbopack: {},
+
   // ── Orígenes permitidos en desarrollo (cross-origin HMR / fast refresh) ───────
   // Necesario cuando se accede desde otro dispositivo (móvil, tablet) vía Tailscale
   // (100.x.x.x) o red local (192.168.x.x / 10.x.x.x).
