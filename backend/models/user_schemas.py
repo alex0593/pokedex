@@ -54,6 +54,34 @@ class TokenData(BaseModel):
     username: Optional[str] = None
 
 
+# ── Sistema de Stages / Aventura por Regiones ────────────────────────────────
+
+class StageAnswerRequest(BaseModel):
+    """Cuerpo del POST /game/stage/answer — una sola respuesta dentro de un stage."""
+    region: str
+    type_name: str
+    is_correct: bool
+
+
+class StageProgressSchema(BaseModel):
+    """Estado de un stage (región + tipo) para un usuario."""
+    region_name: str
+    type_name: str
+    correct_count: int
+    total_count: int
+    attempts: int
+    completed: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RegionProgressSchema(BaseModel):
+    """Estado completo de una región con todos sus stages."""
+    region_name: str
+    badge_earned: bool
+    stages: List[StageProgressSchema]
+
+
 # ── Favoritos ────────────────────────────────────────────────────────────────
 
 class FavoriteCreate(BaseModel):

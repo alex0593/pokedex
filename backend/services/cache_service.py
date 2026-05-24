@@ -3,8 +3,8 @@ import logging
 from datetime import timedelta
 from typing import Any, Optional, TypeVar
 
-import aioredis
-from aioredis import Redis
+import redis.asyncio as aioredis
+from redis.asyncio import Redis
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,8 @@ class CacheService:
         """Initialize the singleton Redis connection."""
         if cls._instance is None:
             cls._instance = cls(redis_url)
-            cls._redis = await aioredis.from_url(redis_url, encoding='utf8', decode_responses=True)
+            # redis.asyncio.from_url es síncrono (no necesita await), a diferencia de aioredis 2.x
+            cls._redis = aioredis.from_url(redis_url, encoding='utf8', decode_responses=True)
             logger.info('Cache service initialized')
         return cls._instance
 
@@ -85,5 +86,5 @@ class CacheService:
     async def close(self) -> None:
         """Close the Redis connection."""
         if self._redis:
-            await self._redis.close()
+            await self._redis.aclose()
             logger.info('Cache service closed')

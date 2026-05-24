@@ -9,26 +9,30 @@ export const MiniNav: React.FC = () => {
     const pathname = usePathname();
 
     const navItems = [
-        { name: '🏠 Inicio', path: '/' },
-        { name: '🔍 Pokémon', path: '/pokemon' },
-        { name: '🎒 Objetos', path: '/items' },
-        { name: '🍒 Bayas', path: '/berries' },
-        { name: '✨ Habilidades', path: '/abilities' },
-        { name: '⚔️ Movimientos', path: '/moves' },
-        { name: '🎮 Juego', path: '/game' },
-        { name: '❤️ Favoritos', path: '/favorites' },
+        { name: 'Inicio',       path: '/' },
+        { name: 'Pokémon',      path: '/pokemon' },
+        { name: 'Objetos',      path: '/items' },
+        { name: 'Bayas',        path: '/berries' },
+        { name: 'Habilidades',  path: '/abilities' },
+        { name: 'Movimientos',  path: '/moves' },
+        { name: 'Juego',        path: '/game' },
+        { name: 'Favoritos',    path: '/favorites' },
     ];
 
     return (
         <nav className={styles.navBar}>
-            {navItems.map((item) => (
-                <Link 
-                    key={item.path} 
-                    href={item.path}
-                    className={`${styles.navBtn} ${pathname === item.path ? styles.active : ''}`}
-                >
-                    {item.name}
-                </Link>
+            {navItems.map((item, idx) => (
+                <React.Fragment key={item.path}>
+                    {idx > 0 && (
+                        <span className={styles.sep} aria-hidden="true">·</span>
+                    )}
+                    <Link
+                        href={item.path}
+                        className={`${styles.navBtn} ${pathname === item.path ? styles.active : ''}`}
+                    >
+                        {item.name}
+                    </Link>
+                </React.Fragment>
             ))}
         </nav>
     );

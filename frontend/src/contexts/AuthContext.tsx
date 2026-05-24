@@ -29,8 +29,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         };
 
+        // 401 global → la sesión expiró o el usuario ya no existe en el backend.
+        // Limpiamos localStorage automáticamente para evitar el estado incoherente
+        // en que el front cree que hay sesión pero el backend la rechaza.
+        const handleUnauthorized = () => {
+            logoutService();
+            setUser(null);
+        };
+
         window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
+        window.addEventListener('auth:unauthorized', handleUnauthorized);
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('auth:unauthorized', handleUnauthorized);
+        };
     }, []);
 
     const handleLogin = async (username: string, password: string) => {

@@ -68,9 +68,9 @@ export const ItemModal: React.FC<ItemModalProps> = ({ item, onClose }) => {
 
                     <h4 className={styles.sectionTitle}>Atributos</h4>
                     <div className={styles.attributes}>
-                        {item.attributes?.map(attr => (
-                            <span key={attr.name} className={styles.attrBadge}>
-                                {(attr.name || '').replace('-', ' ')}
+                        {item.attributes?.map((attr, idx) => (
+                            <span key={`${attr.name || 'attr'}-${idx}`} className={styles.attrBadge}>
+                                {(attr.name || '').replace(/-/g, ' ')}
                             </span>
                         ))}
                         {(item.attributes?.length === 0 || !item.attributes) && (

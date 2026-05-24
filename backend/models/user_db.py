@@ -1,4 +1,6 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, Table, UniqueConstraint
+from datetime import datetime
+
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Table, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -23,6 +25,7 @@ class User(Base):
     region_stats = relationship("UserRegionStat", back_populates="user", cascade="all, delete-orphan")
     achievements = relationship("Achievement", secondary=user_achievements, back_populates="users")
     favorites = relationship("UserFavorite", back_populates="user", cascade="all, delete-orphan")
+    stage_progress = relationship("UserStageProgress", back_populates="user", cascade="all, delete-orphan")
 
 class UserStats(Base):
     __tablename__ = "user_stats"
@@ -57,6 +60,28 @@ class UserRegionStat(Base):
     correct_answers = Column(Integer, default=0)
 
     user = relationship("User", back_populates="region_stats")
+
+
+class UserStageProgress(Base):
+    """Progreso del usuario en un stage (región + tipo) del modo aventura."""
+
+    __tablename__ = "user_stage_progress"
+
+    id            = Column(Integer, primary_key=True, index=True)
+    user_id       = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    region_name   = Column(String, nullable=False)
+    type_name     = Column(String, nullable=False)
+    correct_count = Column(Integer, default=0)   # aciertos en el intento actual
+    total_count   = Column(Integer, default=0)   # preguntas respondidas en el intento actual
+    attempts      = Column(Integer, default=0)   # intentos totales completados
+    completed     = Column(Boolean, default=False)
+    completed_at  = Column(DateTime, nullable=True)
+
+    user = relationship("User", back_populates="stage_progress")
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "region_name", "type_name", name="uq_user_stage_progress"),
+    )
 
 
 class UserFavorite(Base):

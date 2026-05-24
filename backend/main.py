@@ -19,6 +19,7 @@ from routers import (
     berries,
     evolutions,
     favorites,
+    game,
     items,
     locations,
     moves,
@@ -110,6 +111,7 @@ app = FastAPI(
         {"name": "Users", "description": "Autenticación JWT, perfiles, logros regionales y avatares."},
         {"name": "Favorites", "description": "🔒 Colección personal de favoritos (Pokémon, objetos, bayas, habilidades, movimientos)."},
         {"name": "Stats", "description": "Estadísticas de trivia: ranking, racha y récord por región."},
+        {"name": "Game", "description": "🔒 Aventura por Regiones: stages por tipo, progreso y medallas regionales."},
         {"name": "Health", "description": "Estado del servicio y versión."},
         {"name": "General", "description": "Información general de la API."},
     ],
@@ -180,9 +182,15 @@ async def startup():
         logging.warning(f'Redis cache failed to initialize: {e}. Continuing without cache.')
 
     # 2. Database Sync
-    async with engine.begin() as conn:
-        # Create all tables if they don't exist
-        await conn.run_sync(Base.metadata.create_all)
+    # Con --workers >1, varios procesos ejecutan startup() en paralelo.
+    # El primer worker que llega crea las tablas; los demás reciben un
+    # IntegrityError de PostgreSQL por la race condition en el SERIAL/sequence.
+    # Lo capturamos y continuamos — las tablas ya están creadas.
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    except Exception as e:
+        logging.warning(f'create_all skipped (tables likely already exist): {e}')
 
 # Clean up resources
 @app.on_event("shutdown")
@@ -203,6 +211,7 @@ app.include_router(types.router)
 app.include_router(user.router)
 app.include_router(favorites.router)
 app.include_router(stats.router)
+app.include_router(game.router)   # Aventura por regiones (stages + progreso)
 app.include_router(moves.router)
 app.include_router(abilities.router)
 app.include_router(items.router)

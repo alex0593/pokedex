@@ -72,8 +72,18 @@ export async function fetchPokemonBatchDetails(names: string[]): Promise<Pokemon
     return data;
 }
 
-export async function fetchQuiz(): Promise<{ target: PokemonDetail; options: string[] }> {
-    const data = await apiClient<{ target: PokemonDetail; options: string[] }>('/pokemon/game/quiz');
+export async function fetchQuiz(opts?: {
+    region?: string;
+    type?: string;
+}): Promise<{ target: PokemonDetail; options: string[] }> {
+    const params = new URLSearchParams();
+    if (opts?.region) params.append('region', opts.region);
+    if (opts?.type)   params.append('type', opts.type);
+
+    const qs = params.toString();
+    const data = await apiClient<{ target: PokemonDetail; options: string[] }>(
+        `/pokemon/game/quiz${qs ? `?${qs}` : ''}`,
+    );
     pokemonCache.set(data.target.id, data.target);
     pokemonCache.set(data.target.name, data.target);
     return data;
