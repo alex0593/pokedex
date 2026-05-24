@@ -2,15 +2,13 @@
 #
 # Diferencias clave vs docker-compose.yml (dev):
 #   - PostgreSQL y Redis: sin `ports:` → solo accesibles dentro de pokedex-network
-#   - Backend:   host:4004 → container:8000
-#   - Frontend:  host:4003 → container:3000
-#   - Todas las credenciales vienen de variables de entorno (archivo .env del servidor)
-#   - NEXT_PUBLIC_API_URL se inyecta como build arg (se embebe en el bundle Next.js)
+#   - Backend:   host:8000 → container:8000  (Nginx proxia /api/* aquí)
+#   - Frontend:  corre con PM2 fuera de Docker en el puerto 3000
+#   - Todas las credenciales vienen del archivo .env en la raíz del proyecto
 #
 # Uso:
-#   cp backend/.env.prod.example .env   # y edita los valores reales
-#   docker compose -f docker-compose.prod.yml --env-file .env build
-#   docker compose -f docker-compose.prod.yml --env-file .env up -d
+#   cp .env.prod.example .env          # edita con valores reales
+#   docker compose -f docker-compose.prod.yml up -d --build
 
 services:
   # ── PostgreSQL 15 ─────────────────────────────────────────────────────────
@@ -56,7 +54,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "4004:8000"
+      - "127.0.0.1:8000:8000"   # solo accesible desde localhost (Nginx/Next.js)
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-pokedex}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
@@ -72,25 +70,7 @@ services:
       - pokedex-network
     restart: unless-stopped
 
-  # ── Next.js Frontend ──────────────────────────────────────────────────────
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        # NEXT_PUBLIC_* se embebe en el bundle en tiempo de BUILD, no de ejecución.
-        # Este arg debe apuntar a la IP/dominio público del servidor (puerto 4004).
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-    ports:
-      - "4003:3000"
-    environment:
-      NODE_ENV: production
-      NEXT_TELEMETRY_DISABLED: 1
-    depends_on:
-      - backend
-    networks:
-      - pokedex-network
-    restart: unless-stopped
+  # El frontend corre con PM2 fuera de Docker (ver pasos de deploy)
 
 networks:
   pokedex-network:
