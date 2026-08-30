@@ -1,18 +1,28 @@
 import asyncio
 import logging
 import random
-from typing import Any, Dict, List, Optional
+from datetime import timedelta
+from typing import Any, Awaitable, Callable, Dict, List, Optional, TypeVar
 
 import httpx
+
+from services.cache_service import CacheService
 
 logger = logging.getLogger(__name__)
 
 
-async def retry_with_backoff(coro, max_retries: int = 3, base_delay: float = 0.1):
+T = TypeVar("T")
+
+
+async def retry_with_backoff(
+    operation: Callable[[], Awaitable[T]],
+    max_retries: int = 3,
+    base_delay: float = 0.1,
+) -> T:
     """Retry a coroutine with exponential backoff."""
     for attempt in range(max_retries):
         try:
-            return await coro
+            return await operation()
         except (httpx.HTTPError, httpx.TimeoutException) as e:
             if attempt == max_retries - 1:
                 logger.error(f'Max retries exceeded: {e}')
@@ -26,6 +36,39 @@ class PokeAPIService:
     BASE_URL = "https://pokeapi.co/api/v2"
     _client: Optional[httpx.AsyncClient] = None
     _semaphore = asyncio.Semaphore(50) # Virtual 'threads' for concurrent I/O
+    _in_flight: Dict[str, asyncio.Task[Any]] = {}
+
+    @classmethod
+    async def _cached_fetch(
+        cls,
+        key: str,
+        operation: Callable[[], Awaitable[T]],
+        ttl: timedelta,
+    ) -> T:
+        """Cache stable PokeAPI data and coalesce concurrent cache misses."""
+        try:
+            cache = CacheService.get_instance()
+        except RuntimeError:
+            cache = None
+
+        if cache:
+            cached = await cache.get(key)
+            if cached is not None:
+                return cached
+
+        task = cls._in_flight.get(key)
+        if task is None:
+            task = asyncio.create_task(operation())
+            cls._in_flight[key] = task
+
+        try:
+            result = await asyncio.shield(task)
+            if cache:
+                await cache.set(key, result, ttl)
+            return result
+        finally:
+            if task.done() and cls._in_flight.get(key) is task:
+                cls._in_flight.pop(key, None)
 
 
 
@@ -79,14 +122,16 @@ class PokeAPIService:
         """Fetch a list of pokemon names and URLs with full-list caching."""
 
 
-        client = await cls._get_client()
-        async with cls._semaphore:
-            url = f"{cls.BASE_URL}/pokemon?limit={limit}&offset={offset}"
-            response = await client.get(url)
-            response.raise_for_status()
-            data = response.json()
+        async def fetch():
+            client = await cls._get_client()
+            async with cls._semaphore:
+                url = f"{cls.BASE_URL}/pokemon?limit={limit}&offset={offset}"
+                response = await client.get(url)
+                response.raise_for_status()
+                return response.json()
 
-            return data
+        ttl = timedelta(hours=24 if limit >= 1000 and offset == 0 else 1)
+        return await cls._cached_fetch(f"pokeapi:pokemon:list:{limit}:{offset}", fetch, ttl)
 
     @classmethod
     async def get_random_pokemon(cls) -> Dict[str, Any]:
@@ -101,41 +146,50 @@ class PokeAPIService:
 
         # Para obtener traducciones y flavor text necesitamos los dos endpoints
         # Los ejecutamos en paralelo para no afectar el rendimiento
-        pokemon_task = cls._get_raw_pokemon_data(key)
-        species_task = cls.get_pokemon_species_data(key)
-
-        try:
-            pokemon_data, species_data = await asyncio.gather(pokemon_task, species_task)
-            return cls._transform_pokemon_data(pokemon_data, species_data)
-        except (httpx.HTTPError, httpx.TimeoutException, ValueError) as e:
-            logger.warning(f"Could not fetch species data for {key}: {e}, using pokemon data only")
-            pokemon_data = await pokemon_task
-            return cls._transform_pokemon_data(pokemon_data)
+        pokemon_data, species_data = await asyncio.gather(
+            cls._get_raw_pokemon_data(key),
+            cls.get_pokemon_species_data(key),
+            return_exceptions=True,
+        )
+        if isinstance(pokemon_data, Exception):
+            raise pokemon_data
+        if isinstance(species_data, Exception):
+            logger.warning("Could not fetch species data for %s: %s", key, species_data)
+            species_data = None
+        return cls._transform_pokemon_data(pokemon_data, species_data)
 
     @classmethod
     async def _get_raw_pokemon_data(cls, key: str) -> Dict[str, Any]:
         """Helper to get non-transformed data for parallel execution."""
-        client = await cls._get_client()
-        async with cls._semaphore:
-            url = f"{cls.BASE_URL}/pokemon/{key}"
+        async def operation():
+            client = await cls._get_client()
             async def fetch():
+                url = f"{cls.BASE_URL}/pokemon/{key}"
                 response = await client.get(url, timeout=10.0)
                 response.raise_for_status()
                 return response.json()
-            return await retry_with_backoff(fetch())
+            async with cls._semaphore:
+                return await retry_with_backoff(fetch)
+
+        return await cls._cached_fetch(
+            f"pokeapi:pokemon:raw:{key}", operation, timedelta(hours=24)
+        )
 
     @classmethod
     async def get_pokemon_types(cls) -> List[str]:
         """Fetch all pokemon types, cached indefinitely."""
-        client = await cls._get_client()
-        async with cls._semaphore:
-            url = f"{cls.BASE_URL}/type"
-            async def fetch():
-                response = await client.get(url)
-                response.raise_for_status()
-                return response.json()
-            data = await retry_with_backoff(fetch())
-            return [t['name'] for t in data['results']]
+        async def fetch_types():
+            client = await cls._get_client()
+            async with cls._semaphore:
+                url = f"{cls.BASE_URL}/type"
+                async def fetch():
+                    response = await client.get(url)
+                    response.raise_for_status()
+                    return response.json()
+                data = await retry_with_backoff(fetch)
+                return [t['name'] for t in data['results']]
+
+        return await cls._cached_fetch("pokeapi:types", fetch_types, timedelta(hours=24))
 
     @classmethod
     async def get_pokemon_by_types(cls, type_names: List[str]) -> List[Dict[str, Any]]:
@@ -143,20 +197,13 @@ class PokeAPIService:
         if not type_names:
             return []
 
-        client = await cls._get_client()
-        async with cls._semaphore:
-            tasks = []
-            for type_name in type_names:
-                url = f"{cls.BASE_URL}/type/{type_name.lower()}"
-                tasks.append(client.get(url))
-
-            responses = await asyncio.gather(*tasks)
-
-            results_per_type = []
-            for response in responses:
-                response.raise_for_status()
-                data = response.json()
-                results_per_type.append({p['pokemon']['name']: p['pokemon'] for p in data['pokemon']})
+        type_data = await asyncio.gather(
+            *(cls.get_generic_detail("type", name.lower()) for name in type_names)
+        )
+        results_per_type = [
+            {p['pokemon']['name']: p['pokemon'] for p in data['pokemon']}
+            for data in type_data
+        ]
 
         if not results_per_type:
             return []
@@ -171,41 +218,56 @@ class PokeAPIService:
     async def get_pokemon_species_data(cls, name_or_id: str) -> Dict[str, Any]:
         """Fetch pokemon species data for translations and flavor text."""
         key = str(name_or_id).lower()
-        client = await cls._get_client()
-        async with cls._semaphore:
-            url = f"{cls.BASE_URL}/pokemon-species/{key}"
+        async def operation():
+            client = await cls._get_client()
             async def fetch():
+                url = f"{cls.BASE_URL}/pokemon-species/{key}"
                 response = await client.get(url, timeout=10.0)
                 response.raise_for_status()
                 return response.json()
-            return await retry_with_backoff(fetch())
+            async with cls._semaphore:
+                return await retry_with_backoff(fetch)
+
+        return await cls._cached_fetch(
+            f"pokeapi:pokemon:species:{key}", operation, timedelta(hours=24)
+        )
 
 
 
     @classmethod
     async def get_generic_data(cls, endpoint: str, limit: int = 25, offset: int = 0) -> Dict[str, Any]:
         """Fetch a paginated list of items from a specific PokeAPI endpoint with caching."""
-        client = await cls._get_client()
-        async with cls._semaphore:
-            url = f"{cls.BASE_URL}/{endpoint}?limit={limit}&offset={offset}"
+        async def operation():
+            client = await cls._get_client()
             async def fetch():
+                url = f"{cls.BASE_URL}/{endpoint}?limit={limit}&offset={offset}"
                 response = await client.get(url, timeout=10.0)
                 response.raise_for_status()
                 return response.json()
-            return await retry_with_backoff(fetch())
+            async with cls._semaphore:
+                return await retry_with_backoff(fetch)
+
+        return await cls._cached_fetch(
+            f"pokeapi:{endpoint}:list:{limit}:{offset}", operation, timedelta(hours=1)
+        )
 
     @classmethod
     async def get_generic_detail(cls, endpoint: str, name_or_id: str) -> Dict[str, Any]:
         """Fetch detailed information of a specific item from a PokeAPI endpoint with caching."""
         lookup_id = str(name_or_id).lower()
-        client = await cls._get_client()
-        async with cls._semaphore:
-            url = f"{cls.BASE_URL}/{endpoint}/{lookup_id}"
+        async def operation():
+            client = await cls._get_client()
             async def fetch():
+                url = f"{cls.BASE_URL}/{endpoint}/{lookup_id}"
                 response = await client.get(url, timeout=10.0)
                 response.raise_for_status()
                 return response.json()
-            return await retry_with_backoff(fetch())
+            async with cls._semaphore:
+                return await retry_with_backoff(fetch)
+
+        return await cls._cached_fetch(
+            f"pokeapi:{endpoint}:detail:{lookup_id}", operation, timedelta(hours=24)
+        )
 
     @classmethod
     async def get_optimized_quiz(cls, region_name: Optional[str] = None, type_name: Optional[str] = None) -> Dict[str, Any]:
@@ -372,6 +434,4 @@ class PokeAPIService:
             })
 
         return transformed
-
-
 

@@ -77,22 +77,41 @@ def make_catalog_router(
         cache = _cache()
 
         # Intentar servir todo desde caché
+        cached_items = [None] * len(id_list)
         if cache:
-            cache_keys = [f"catalog:{entity_type}:detail:{name}" for name in id_list]
-            cached_items = [await cache.get(k) for k in cache_keys]
+            cache_keys = [f"catalog:{entity_type}:detail:{name.lower()}" for name in id_list]
+            cached_items = await cache.get_many(cache_keys)
             if all(v is not None for v in cached_items):
                 if response:
                     response.headers['Cache-Control'] = 'public, max-age=3600'
                 return cached_items
 
         try:
-            data = await PokeAPIService.get_generic_batch(entity_type, id_list)
+            missing_names = [
+                name for name, value in zip(id_list, cached_items, strict=False) if value is None
+            ]
+            fetched = await PokeAPIService.get_generic_batch(entity_type, missing_names)
+            fetched_by_name = {}
+            for item in fetched:
+                canonical_name = str(item.get("original_name") or item.get("name", "")).lower()
+                if canonical_name:
+                    fetched_by_name[canonical_name] = item
+                if item.get("id") is not None:
+                    fetched_by_name[str(item["id"])] = item
+            data = []
+            for name, cached_item in zip(id_list, cached_items, strict=False):
+                item = cached_item or fetched_by_name.get(name.lower())
+                if item is not None:
+                    data.append(item)
+
             # Guardar cada ítem en caché para que el detail endpoint también lo aproveche
             if cache:
-                for item in data:
+                cache_values = {}
+                for item in fetched:
                     item_name = item.get("original_name") or item.get("name", "").lower()
                     if item_name:
-                        await cache.set(f"catalog:{entity_type}:detail:{item_name}", item, DETAIL_TTL)
+                        cache_values[f"catalog:{entity_type}:detail:{item_name.lower()}"] = item
+                await cache.set_many(cache_values, DETAIL_TTL)
             if response:
                 response.headers['Cache-Control'] = 'public, max-age=3600'
             return data

@@ -15,6 +15,13 @@ SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 if not SQLALCHEMY_DATABASE_URL:
     raise ValueError("ERROR: DATABASE_URL no configurado en .env. Requerido para conectar a PostgreSQL.")
 
+# Render and other managed providers expose a standard PostgreSQL URL. This
+# application uses SQLAlchemy's async engine, so select the asyncpg driver.
+if SQLALCHEMY_DATABASE_URL.startswith("postgresql://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace(
+        "postgresql://", "postgresql+asyncpg://", 1
+    )
+
 # Inicializar motor de base de datos asíncrono
 # Se deshabilita completamente el caché de declaraciones preparadas de asyncpg
 # para evitar choques con el PgBouncer (pooler de transacciones) de Supabase en puerto 6543

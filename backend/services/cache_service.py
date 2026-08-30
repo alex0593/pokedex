@@ -1,7 +1,7 @@
 import json
 import logging
 from datetime import timedelta
-from typing import Any, Optional, TypeVar
+from typing import Any, Dict, List, Optional, TypeVar
 
 import redis.asyncio as aioredis
 from redis.asyncio import Redis
@@ -60,6 +60,33 @@ class CacheService:
             logger.debug(f'Cache set: {key} (TTL: {ttl})')
         except Exception as e:
             logger.warning(f'Cache set error for {key}: {e}')
+
+    async def get_many(self, keys: List[str]) -> List[Optional[Any]]:
+        """Retrieve several values in one Redis round trip, preserving key order."""
+        if not keys or self._redis is None:
+            return [None] * len(keys)
+        try:
+            values = await self._redis.mget(keys)
+            return [json.loads(value) if value is not None else None for value in values]
+        except Exception as e:
+            logger.warning(f'Cache mget error: {e}')
+            return [None] * len(keys)
+
+    async def set_many(
+        self,
+        values: Dict[str, Any],
+        ttl: timedelta = timedelta(hours=24),
+    ) -> None:
+        """Store several values with a shared TTL in one Redis pipeline."""
+        if not values or self._redis is None:
+            return
+        try:
+            async with self._redis.pipeline(transaction=False) as pipe:
+                for key, value in values.items():
+                    pipe.setex(key, ttl, json.dumps(value))
+                await pipe.execute()
+        except Exception as e:
+            logger.warning(f'Cache pipeline error: {e}')
 
     async def delete(self, key: str) -> None:
         """Delete a key from cache."""

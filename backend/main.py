@@ -124,6 +124,9 @@ app.state.limiter = limiter
 # Security headers middleware — hosts configurables via ALLOWED_HOSTS env var
 _allowed_hosts_env = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1")
 allowed_hosts = [h.strip() for h in _allowed_hosts_env.split(",") if h.strip()]
+render_hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip()
+if render_hostname and render_hostname not in allowed_hosts:
+    allowed_hosts.append(render_hostname)
 app.add_middleware(
     TrustedHostMiddleware,
     allowed_hosts=allowed_hosts,

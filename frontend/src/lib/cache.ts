@@ -1,16 +1,36 @@
 export class Cache<K, V> {
-    private store: Map<K, V> = new Map();
+    private store: Map<K, { value: V; expiresAt: number }> = new Map();
+
+    constructor(
+        private readonly ttlMs: number = 60 * 60 * 1000,
+        private readonly maxEntries: number = 500,
+    ) {}
 
     has(key: K): boolean {
-        return this.store.has(key);
+        return this.get(key) !== undefined;
     }
 
     get(key: K): V | undefined {
-        return this.store.get(key);
+        const entry = this.store.get(key);
+        if (!entry) return undefined;
+        if (entry.expiresAt <= Date.now()) {
+            this.store.delete(key);
+            return undefined;
+        }
+        // Reinserting promotes the entry to most recently used.
+        this.store.delete(key);
+        this.store.set(key, entry);
+        return entry.value;
     }
 
     set(key: K, value: V): void {
-        this.store.set(key, value);
+        this.store.delete(key);
+        this.store.set(key, { value, expiresAt: Date.now() + this.ttlMs });
+        while (this.store.size > this.maxEntries) {
+            const oldestKey = this.store.keys().next().value as K | undefined;
+            if (oldestKey === undefined) break;
+            this.store.delete(oldestKey);
+        }
     }
 
     clear(): void {
@@ -27,5 +47,5 @@ export class Cache<K, V> {
 }
 
 // Singleton instances for each entity type
-export const pokemonCache = new Cache<string | number, unknown>();
-export const catalogCache = new Cache<string, unknown[]>();
+export const pokemonCache = new Cache<string | number, unknown>(24 * 60 * 60 * 1000, 500);
+export const catalogCache = new Cache<string, unknown[]>(60 * 60 * 1000, 200);

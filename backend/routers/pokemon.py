@@ -1,15 +1,42 @@
 import asyncio
 import logging
+from datetime import timedelta
 from typing import List, Optional
 
 import httpx
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Response
 
+from services.cache_service import CacheService
 from services.pokeapi_service import PokeAPIService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/pokemon", tags=["Pokemon"])
+DETAIL_TTL = timedelta(hours=24)
+
+
+def _cache():
+    try:
+        return CacheService.get_instance()
+    except RuntimeError:
+        return None
+
+
+def _detail_key(identifier: str) -> str:
+    return f"pokemon:detail:{identifier.lower()}"
+
+
+async def _cache_pokemon_details(items: List[dict]) -> None:
+    cache = _cache()
+    if not cache:
+        return
+    values = {}
+    for item in items:
+        identifiers = [item.get("original_name"), item.get("name"), item.get("id")]
+        for identifier in identifiers:
+            if identifier is not None:
+                values[_detail_key(str(identifier))] = item
+    await cache.set_many(values, DETAIL_TTL)
 
 
 @router.get("/")
@@ -19,6 +46,7 @@ async def list_pokemon(
     type: Optional[str] = Query(None, description="Filtrar por un tipo (ej., 'fire')"),
     types: List[str] = Query([], description="Filtrar por múltiples tipos"),
     search: Optional[str] = Query(None, description="Buscar por nombre (coincidencia parcial)"),
+    response: Response = None,
 ):
     """Lista de Pokémon con paginación y filtrado opcional por tipos o término de búsqueda."""
     try:
@@ -51,7 +79,7 @@ async def list_pokemon(
             type_qs = "".join([f"&types={t}" for t in filter_types])
             search_qs = f"&search={search}" if search else ""
 
-            return {
+            result = {
                 "count": total,
                 "next": (
                     None
@@ -65,6 +93,9 @@ async def list_pokemon(
                 ),
                 "results": paginated,
             }
+            if response:
+                response.headers["Cache-Control"] = "public, max-age=3600"
+            return result
 
         # Case 2: Only search term filter
         if search:
@@ -73,7 +104,7 @@ async def list_pokemon(
             total = len(all_matching)
             paginated = all_matching[offset : offset + limit]
 
-            return {
+            result = {
                 "count": total,
                 "next": (
                     None
@@ -87,9 +118,15 @@ async def list_pokemon(
                 ),
                 "results": paginated,
             }
+            if response:
+                response.headers["Cache-Control"] = "public, max-age=3600"
+            return result
 
         # Default case: standard pagination
-        return await PokeAPIService.get_pokemon_list(limit, offset)
+        result = await PokeAPIService.get_pokemon_list(limit, offset)
+        if response:
+            response.headers["Cache-Control"] = "public, max-age=3600"
+        return result
 
     except httpx.HTTPStatusError as e:
         logger.error(f"HTTP error fetching pokemon: {e}", exc_info=True)
@@ -141,22 +178,61 @@ async def get_quiz(
 @router.get("/batch/details")
 async def get_batch_details(
     names: List[str] = Query(..., description="Lista de nombres para obtener detalles"),
+    response: Response = None,
 ):
     """Obtener detalles de muchos Pokémon a la vez de forma concurrente."""
     if not names:
         return []
 
-    tasks = [PokeAPIService.get_pokemon_by_name_or_id(name) for name in names]
-    responses = await asyncio.gather(*tasks, return_exceptions=True)
+    normalized_names = [str(name).lower() for name in names]
+    cache = _cache()
+    cached_items = (
+        await cache.get_many([_detail_key(name) for name in normalized_names])
+        if cache else [None] * len(normalized_names)
+    )
+    missing_names = [
+        name
+        for name, item in zip(normalized_names, cached_items, strict=False)
+        if item is None
+    ]
+    tasks = [PokeAPIService.get_pokemon_by_name_or_id(name) for name in missing_names]
+    fetched_results = await asyncio.gather(*tasks, return_exceptions=True)
+    fetched = [item for item in fetched_results if not isinstance(item, Exception)]
+    await _cache_pokemon_details(fetched)
 
-    return [r for r in responses if not isinstance(r, Exception)]
+    fetched_by_key = {}
+    for item in fetched:
+        for identifier in (item.get("original_name"), item.get("name"), item.get("id")):
+            if identifier is not None:
+                fetched_by_key[str(identifier).lower()] = item
+
+    results = []
+    for name, cached_item in zip(normalized_names, cached_items, strict=False):
+        item = cached_item or fetched_by_key.get(name)
+        if item is not None:
+            results.append(item)
+
+    if response:
+        response.headers["Cache-Control"] = "public, max-age=3600"
+    return results
 
 
 @router.get("/{name_or_id}")
-async def get_pokemon_detail(name_or_id: str):
+async def get_pokemon_detail(name_or_id: str, response: Response = None):
     """Obtener todos los detalles de un Pokémon específico por nombre o ID."""
     try:
-        return await PokeAPIService.get_pokemon_by_name_or_id(name_or_id)
+        cache = _cache()
+        if cache:
+            cached = await cache.get(_detail_key(name_or_id))
+            if cached is not None:
+                if response:
+                    response.headers["Cache-Control"] = "public, max-age=86400"
+                return cached
+        result = await PokeAPIService.get_pokemon_by_name_or_id(name_or_id)
+        await _cache_pokemon_details([result])
+        if response:
+            response.headers["Cache-Control"] = "public, max-age=86400"
+        return result
     except (httpx.HTTPError, httpx.TimeoutException, ValueError) as e:
         logger.error(f"Error fetching pokemon detail for {name_or_id}: {e}", exc_info=True)
         raise HTTPException(status_code=404, detail="Pokémon no encontrado") from e

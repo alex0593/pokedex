@@ -55,4 +55,37 @@ describe('apiClient', () => {
     await expect(apiClient('/pokemon/nonexistent')).rejects.toThrow();
     expect(global.fetch).toHaveBeenCalledTimes(1);
   });
+
+  it('deduplicates concurrent identical GET requests', async () => {
+    let resolveRequest!: (value: Response) => void;
+    global.fetch = vi.fn().mockReturnValueOnce(
+      new Promise<Response>((resolve) => { resolveRequest = resolve; }),
+    );
+
+    const first = apiClient('/pokemon/pikachu');
+    const second = apiClient('/pokemon/pikachu');
+    resolveRequest({
+      ok: true,
+      status: 200,
+      json: async () => ({ id: 25 }),
+    } as Response);
+
+    await expect(Promise.all([first, second])).resolves.toEqual([{ id: 25 }, { id: 25 }]);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not deduplicate mutation requests', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ ok: true }),
+    } as Response);
+
+    await Promise.all([
+      apiClient('/favorites', { method: 'POST', body: { id: 1 } }),
+      apiClient('/favorites', { method: 'POST', body: { id: 1 } }),
+    ]);
+
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
 });

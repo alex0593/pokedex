@@ -3,6 +3,7 @@
 // Ver next.config.ts → rewrites()
 const BASE_URL = '/api';
 const DEFAULT_TIMEOUT = 10000; // 10s
+const inFlightGets = new Map<string, Promise<unknown>>();
 
 interface FetchOptions {
     method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -27,7 +28,7 @@ async function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function apiClient<T = unknown>(
+async function performRequest<T>(
     endpoint: string,
     options: FetchOptions = {}
 ): Promise<T> {
@@ -47,17 +48,20 @@ export async function apiClient<T = unknown>(
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-            const response = await fetch(url, {
-                method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...headers,
-                },
-                body: body ? JSON.stringify(body) : undefined,
-                signal: controller.signal,
-            });
-
-            clearTimeout(timeoutId);
+            let response: Response;
+            try {
+                response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...headers,
+                    },
+                    body: body ? JSON.stringify(body) : undefined,
+                    signal: controller.signal,
+                });
+            } finally {
+                clearTimeout(timeoutId);
+            }
 
             if (!response.ok) {
                 let errorDetail = `HTTP ${response.status}`;
@@ -97,6 +101,29 @@ export async function apiClient<T = unknown>(
     }
 
     throw lastError || new Error('Unknown error');
+}
+
+export function apiClient<T = unknown>(
+    endpoint: string,
+    options: FetchOptions = {},
+): Promise<T> {
+    const method = options.method ?? 'GET';
+    if (method !== 'GET') return performRequest<T>(endpoint, options);
+
+    const headersKey = Object.entries(options.headers ?? {})
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, value]) => `${key.toLowerCase()}:${value}`)
+        .join('|');
+    const key = `${endpoint}|${headersKey}|${options.timeout ?? DEFAULT_TIMEOUT}|${options.retries ?? 3}`;
+    const existing = inFlightGets.get(key) as Promise<T> | undefined;
+    if (existing) return existing;
+
+    const request = performRequest<T>(endpoint, options);
+    inFlightGets.set(key, request);
+    request.finally(() => {
+        if (inFlightGets.get(key) === request) inFlightGets.delete(key);
+    }).catch(() => undefined);
+    return request;
 }
 
 export { ApiError };

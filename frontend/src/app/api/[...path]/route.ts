@@ -11,7 +11,8 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
+const backendHost = process.env.BACKEND_URL || 'http://localhost:8000';
+const BACKEND_URL = backendHost.includes('://') ? backendHost : `http://${backendHost}`;
 
 type Ctx = { params: Promise<{ path: string[] }> };
 
@@ -33,13 +34,23 @@ async function proxy(req: NextRequest, ctx: Ctx): Promise<NextResponse> {
   }
 
   const res = await fetch(url, init);
-  const body = await res.text();
+  const responseHeaders = new Headers();
+  for (const key of ['content-type', 'etag', 'last-modified']) {
+    const value = res.headers.get(key);
+    if (value) responseHeaders.set(key, value);
+  }
 
-  return new NextResponse(body, {
+  const isPublicResponse = !headers.has('authorization') && res.ok;
+  if (isPublicResponse) {
+    const cacheControl = res.headers.get('cache-control');
+    if (cacheControl) responseHeaders.set('cache-control', cacheControl);
+  } else {
+    responseHeaders.set('cache-control', 'private, no-store');
+  }
+
+  return new NextResponse(res.body, {
     status: res.status,
-    headers: {
-      'content-type': res.headers.get('content-type') ?? 'application/json',
-    },
+    headers: responseHeaders,
   });
 }
 
