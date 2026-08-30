@@ -47,10 +47,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: BACKEND_URL
-        fromService:
-          type: web
-          name: pokedex-backend
-          property: hostport
+        value: https://pokedex-backend-kor1.onrender.com
 
 databases:
   - name: pokedex-db
