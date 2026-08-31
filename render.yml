@@ -9,6 +9,7 @@ services:
     name: pokedex-backend
     runtime: docker
     plan: free
+    autoDeployTrigger: commit
     rootDir: backend
     dockerfilePath: ./Dockerfile
     dockerContext: .
@@ -37,6 +38,7 @@ services:
     name: pokedex-frontend
     runtime: node
     plan: free
+    autoDeployTrigger: commit
     rootDir: frontend
     buildCommand: npm ci --legacy-peer-deps --include=dev && npm run build
     startCommand: npm start -- --hostname 0.0.0.0 --port $PORT
@@ -47,7 +49,10 @@ services:
       - key: NODE_ENV
         value: production
       - key: BACKEND_URL
-        value: https://pokedex-backend-kor1.onrender.com
+        fromService:
+          type: web
+          name: pokedex-backend
+          envVarKey: RENDER_EXTERNAL_URL
 
 databases:
   - name: pokedex-db

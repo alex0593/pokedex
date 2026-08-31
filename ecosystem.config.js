@@ -18,7 +18,8 @@ module.exports = {
         NEXT_TELEMETRY_DISABLED: '1',
         // BACKEND_URL es leído SOLO por el servidor Next.js (route handler proxy)
         // El navegador nunca lo ve — no lleva NEXT_PUBLIC_
-        BACKEND_URL: 'http://localhost:8000',
+        // docker-compose.prod.yml publica FastAPI en loopback:4004.
+        BACKEND_URL: 'http://127.0.0.1:4004',
       },
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       error_file: '/var/log/pm2/pokedex-frontend-error.log',

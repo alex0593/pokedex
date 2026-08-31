@@ -22,8 +22,9 @@ module.exports = {
       env_production: {
         NODE_ENV: "production",
         PORT: 3000,
-        // URL pública del backend (Nginx redirige /api → localhost:8000)
-        NEXT_PUBLIC_API_URL: "https://ultimate-poke.sytes.net/api",
+        // URL interna usada por el Route Handler /api/** del servidor Next.js.
+        // El navegador solo llama al mismo origen; esta URL no se expone.
+        BACKEND_URL: "http://127.0.0.1:4004",
         NEXT_TELEMETRY_DISABLED: "1",
       },
     },

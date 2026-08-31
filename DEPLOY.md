@@ -45,7 +45,7 @@ Edita `.env` y **reemplaza todos los valores marcados** con `CAMBIA_ESTO` y `MI_
 | `SECRET_KEY` | Clave aleatoria para JWT (ver más abajo) |
 | `CORS_ORIGINS` | URL del frontend: `http://IP_SERVIDOR:4003` |
 | `ALLOWED_HOSTS` | `localhost,127.0.0.1,IP_SERVIDOR` |
-| `NEXT_PUBLIC_API_URL` | URL del backend: `http://IP_SERVIDOR:4004` |
+| `BACKEND_URL` | URL interna del backend para Next.js: `http://127.0.0.1:4004` |
 
 Para generar `SECRET_KEY`:
 ```bash
@@ -58,8 +58,8 @@ python3 -c "import secrets; print(secrets.token_urlsafe(64))"
 docker compose -f docker-compose.prod.yml --env-file .env build
 ```
 
-> El build del frontend puede tardar 2-4 minutos la primera vez.  
-> `NEXT_PUBLIC_API_URL` se embebe en el bundle en este paso — si cambias la IP del servidor necesitarás rebuildar.
+> El frontend usa un proxy de mismo origen en `/api/**`. `BACKEND_URL` se lee al ejecutar
+> Next.js, por lo que no se expone al navegador ni requiere recompilar el frontend.
 
 ### 4. Levantar los contenedores
 
@@ -139,9 +139,9 @@ docker compose -f docker-compose.prod.yml exec redis \
 
 ### El frontend no puede llegar al backend
 
-- Comprueba que `NEXT_PUBLIC_API_URL` en `.env` apunta a la IP pública del servidor (no `localhost`).
-- `localhost` dentro del contenedor frontend hace referencia **al propio contenedor**, no al backend.
-- Si cambias la URL deberás rebuildar: `docker compose ... build frontend`.
+- Comprueba que `BACKEND_URL` en el proceso PM2 apunta a `http://127.0.0.1:4004`.
+- Comprueba primero `curl http://127.0.0.1:4004/health` y después
+  `curl http://127.0.0.1:4003/api/health` para validar el proxy completo.
 
 ### El backend no arranca
 
@@ -166,8 +166,8 @@ ss -tlnp | grep 400
 Internet
    │
    ├── :4003 ──► [frontend container :3000]
-   │                        │ fetch() http://IP:4004/...
-   │                        ▼  (desde el navegador del usuario)
+   │                        │ proxy /api/** → http://127.0.0.1:4004/...
+   │                        ▼  (desde el servidor Next.js)
    └── :4004 ──► [backend container :8000]
                             │
                     pokedex-network (bridge)
@@ -178,4 +178,5 @@ Internet
     (sin puertos externos)    (sin puertos externos)
 ```
 
-> **Nota sobre NEXT_PUBLIC_API_URL**: las llamadas al backend las hace el **navegador del usuario**, no el contenedor del frontend. Por eso la URL debe ser la IP/dominio público del servidor, no el nombre del servicio Docker (`backend`).
+> El navegador llama siempre a `/api/**` en el mismo origen. Next.js reenvía esas
+> peticiones al backend usando la variable privada `BACKEND_URL`.

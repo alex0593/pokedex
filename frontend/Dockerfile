@@ -12,11 +12,6 @@ RUN npm ci --legacy-peer-deps
 # Copy source code
 COPY . .
 
-# NEXT_PUBLIC_* variables se embeben en el bundle en tiempo de build, no de ejecución.
-# Recibe el valor desde docker-compose.prod.yml (build arg NEXT_PUBLIC_API_URL).
-ARG NEXT_PUBLIC_API_URL=http://localhost:8000
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-
 # Build the Next.js application
 RUN npm run build
 
@@ -43,7 +38,8 @@ USER appuser
 EXPOSE 3000
 
 ENV NODE_ENV=production \
-    NEXT_TELEMETRY_DISABLED=1
+    NEXT_TELEMETRY_DISABLED=1 \
+    BACKEND_URL=http://backend:8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3000', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})" || exit 1
