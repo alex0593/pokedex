@@ -121,7 +121,7 @@ export function getLoggedToken(): string | null {
 // ── Aventura por Regiones ─────────────────────────────────────────────────────
 
 import { apiClient } from '../lib/apiClient';
-import type { StageAnswerResult, RegionProgress } from '../types/game';
+import type { RankingResponse, StageAnswerResult, RegionProgress } from '../types/game';
 
 /**
  * Registra una respuesta en un stage (POST /game/stage/answer).
@@ -149,5 +149,13 @@ export async function saveStageAnswer(
 export async function fetchRegionsProgress(token: string): Promise<RegionProgress[]> {
     return apiClient<RegionProgress[]>('/game/regions/progress', {
         headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
+/** Obtiene el Top 50 público y, con token, la posición del usuario actual. */
+export async function fetchRanking(token?: string | null): Promise<RankingResponse> {
+    return apiClient<RankingResponse>('/game/ranking', {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        retries: 1,
     });
 }

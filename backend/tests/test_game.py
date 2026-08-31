@@ -155,3 +155,56 @@ def test_free_game_result_updates_authenticated_user(client: TestClient):
     assert profile.json()["stats"]["total_answers"] == 1
     assert profile.json()["stats"]["correct_answers"] == 1
     assert profile.json()["stats"]["high_score"] == 3
+
+
+def test_ranking_is_public_and_requires_a_completed_adventure_attempt(client: TestClient):
+    headers = auth_headers(client, "ranked-user")
+
+    for index in range(9):
+        stage_answer(client, headers, correct=index < 7)
+
+    before_completion = client.get("/game/ranking")
+    assert before_completion.status_code == 200
+    assert before_completion.json() == {
+        "leaders": [],
+        "current_user": None,
+        "total_players": 0,
+    }
+
+    stage_answer(client, headers, correct=False)
+    ranking = client.get("/game/ranking")
+
+    assert ranking.status_code == 200
+    assert ranking.json()["total_players"] == 1
+    assert ranking.json()["current_user"] is None
+    assert ranking.json()["leaders"][0] == {
+        "position": 1,
+        "username": "ranked-user",
+        "avatar_url": None,
+        "points": 7,
+        "medals": 0,
+        "accuracy": 70.0,
+        "attempts": 1,
+    }
+
+
+def test_ranking_returns_personal_position_and_does_not_duplicate_answers(client: TestClient):
+    first_headers = auth_headers(client, "ash")
+    second_headers = auth_headers(client, "misty")
+
+    for index in range(10):
+        stage_answer(client, first_headers, correct=index < 8)
+
+    duplicate_id = str(uuid4())
+    stage_answer(client, second_headers, correct=True, answer_id=duplicate_id)
+    stage_answer(client, second_headers, correct=True, answer_id=duplicate_id)
+    for index in range(9):
+        stage_answer(client, second_headers, correct=index < 6)
+
+    ranking = client.get("/game/ranking", headers=second_headers).json()
+
+    assert [entry["username"] for entry in ranking["leaders"]] == ["ash", "misty"]
+    assert [entry["points"] for entry in ranking["leaders"]] == [8, 7]
+    assert ranking["current_user"]["username"] == "misty"
+    assert ranking["current_user"]["position"] == 2
+    assert ranking["current_user"]["attempts"] == 1

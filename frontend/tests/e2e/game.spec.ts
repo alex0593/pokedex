@@ -45,6 +45,26 @@ test('completa una pregunta del modo libre', async ({ page }) => {
   );
 });
 
+test('muestra la clasificación global a invitados', async ({ page }) => {
+  await page.route('**/api/game/ranking', route => route.fulfill({
+    json: {
+      total_players: 2,
+      current_user: null,
+      leaders: [
+        { position: 1, username: 'ash', avatar_url: null, points: 25, medals: 2, accuracy: 83.3, attempts: 3 },
+        { position: 2, username: 'misty', avatar_url: null, points: 18, medals: 1, accuracy: 75, attempts: 2 },
+      ],
+    },
+  }));
+
+  await page.goto('/game');
+  await page.getByRole('button', { name: /Clasificación/ }).click();
+
+  await expect(page.getByRole('heading', { name: 'Clasificación global' })).toBeVisible();
+  await expect(page.getByText('25 puntos')).toBeVisible();
+  await expect(page.getByText('2 entrenadores · Histórico de Aventura')).toBeVisible();
+});
+
 test('repasa una respuesta fallida después de tres preguntas distintas', async ({ page }) => {
   await mockQuiz(page);
   await page.goto('/game');

@@ -25,6 +25,22 @@ export interface StageAnswerResult {
   new_achievements: string[];
 }
 
+export interface RankingEntry {
+  position: number;
+  username: string;
+  avatar_url?: string | null;
+  points: number;
+  medals: number;
+  accuracy: number;
+  attempts: number;
+}
+
+export interface RankingResponse {
+  leaders: RankingEntry[];
+  current_user: RankingEntry | null;
+  total_players: number;
+}
+
 /**
  * Mapa canónico de tipos por región — espejo del REGION_STAGES del backend.
  * Usado como fallback en StageSelect cuando el usuario no está autenticado.

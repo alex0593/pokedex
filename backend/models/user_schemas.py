@@ -90,6 +90,22 @@ class RegionProgressSchema(BaseModel):
     stages: List[StageProgressSchema]
 
 
+class RankingEntry(BaseModel):
+    position: int
+    username: str
+    avatar_url: Optional[str] = None
+    points: int
+    medals: int
+    accuracy: float
+    attempts: int
+
+
+class RankingResponse(BaseModel):
+    leaders: List[RankingEntry]
+    current_user: Optional[RankingEntry] = None
+    total_players: int
+
+
 # ── Favoritos ────────────────────────────────────────────────────────────────
 
 class FavoriteCreate(BaseModel):

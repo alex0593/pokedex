@@ -1,0 +1,133 @@
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  color: #f8fafc;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 28px;
+  text-align: left;
+}
+
+.header h2 { margin: 0; font-size: 1.8rem; }
+.header p { margin: 4px 0 0; color: rgba(255, 255, 255, 0.68); }
+.trophy { font-size: 3rem; }
+
+.podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 14px;
+  margin-bottom: 26px;
+}
+
+.podiumCard {
+  min-height: 190px;
+  padding: 20px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 3px solid #94a3b8;
+  border-radius: 18px;
+  background: linear-gradient(160deg, #17182f, #20213e);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.champion {
+  min-height: 215px;
+  border-top-color: #facc15;
+  background: linear-gradient(160deg, #2a2511, #292418);
+}
+
+.medal { font-size: 2rem; }
+.podiumPoints { color: #facc15; font-weight: 900; }
+.podiumCard small { color: rgba(255, 255, 255, 0.66); }
+
+.avatar,
+.avatarFallback {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  object-fit: cover;
+  background: #334155;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-weight: 900;
+}
+
+.table {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 16px;
+  background: #16172e;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+.row {
+  min-width: 720px;
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 60px minmax(190px, 1.7fr) repeat(4, minmax(85px, 1fr));
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.row:last-child { border-bottom: 0; }
+.tableHeader { min-height: 44px; color: rgba(255, 255, 255, 0.6); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; }
+.position { color: #cbd5e1; }
+.points { color: #facc15; font-size: 1.05rem; }
+
+.player { display: flex; align-items: center; gap: 10px; min-width: 0; font-weight: 800; }
+.player > span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.youBadge { padding: 2px 8px; border-radius: 20px; background: #ef4444; color: white; font-size: 0.68rem; }
+.currentRow { background: rgba(239, 68, 68, 0.12); box-shadow: inset 4px 0 #ef4444; }
+
+.personalSection { margin-bottom: 20px; }
+.personalSection > span { display: block; margin-bottom: 8px; color: #facc15; font-weight: 900; }
+.personalSection .row { border: 1px solid rgba(250, 204, 21, 0.4); border-radius: 14px; background: #1c1a10; }
+
+.state {
+  max-width: 680px;
+  min-height: 280px;
+  margin: 0 auto;
+  padding: 44px 24px;
+  border-radius: 20px;
+  background: #16172e;
+  color: #f8fafc;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.state h2, .state p { margin: 6px 0; }
+.emptyIcon { font-size: 3rem; }
+.retryButton { margin-top: 12px; padding: 10px 20px; border: 0; border-radius: 50px; background: #f8fafc; color: #111827; font-weight: 800; cursor: pointer; }
+.retryButton:focus-visible { outline: 3px solid #facc15; outline-offset: 3px; }
+
+@media (max-width: 760px) {
+  .podium { grid-template-columns: 1fr; }
+  .podiumCard, .champion { min-height: 0; }
+  .table, .personalSection { overflow-x: auto; }
+}
+
+@media (max-width: 480px) {
+  .header { justify-content: flex-start; }
+  .header h2 { font-size: 1.35rem; }
+  .header p { font-size: 0.8rem; }
+  .trophy { font-size: 2.3rem; }
+}

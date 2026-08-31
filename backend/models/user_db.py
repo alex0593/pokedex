@@ -36,6 +36,12 @@ class User(Base):
     achievements = relationship("Achievement", secondary=user_achievements, back_populates="users")
     favorites = relationship("UserFavorite", back_populates="user", cascade="all, delete-orphan")
     stage_progress = relationship("UserStageProgress", back_populates="user", cascade="all, delete-orphan")
+    adventure_stats = relationship(
+        "UserAdventureStats",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
 
 class UserStats(Base):
     __tablename__ = "user_stats"
@@ -92,6 +98,26 @@ class UserStageProgress(Base):
     __table_args__ = (
         UniqueConstraint("user_id", "region_name", "type_name", name="uq_user_stage_progress"),
     )
+
+
+class UserAdventureStats(Base):
+    """Estadísticas acumuladas exclusivamente para el ranking de Aventura."""
+
+    __tablename__ = "user_adventure_stats"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    total_answers = Column(Integer, default=0, nullable=False)
+    correct_answers = Column(Integer, default=0, nullable=False)
+    completed_attempts = Column(Integer, default=0, nullable=False)
+
+    user = relationship("User", back_populates="adventure_stats")
 
 
 class StageAnswerReceipt(Base):

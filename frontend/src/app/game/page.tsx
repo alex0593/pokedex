@@ -29,8 +29,12 @@ const StageGame = dynamic(
   () => import('../../components/StageGame').then(mod => ({ default: mod.StageGame })),
   { ssr: false },
 );
+const RankingView = dynamic(
+  () => import('../../components/RankingView').then(mod => ({ default: mod.RankingView })),
+  { ssr: false },
+);
 
-type GameView = 'hub' | 'free' | 'regions' | 'stage-select' | 'stage-game' | 'profile';
+type GameView = 'hub' | 'free' | 'regions' | 'stage-select' | 'stage-game' | 'profile' | 'ranking';
 
 export default function GamePage() {
   const { user } = useAuth();
@@ -156,6 +160,23 @@ export default function GamePage() {
                     </p>
                   </motion.button>
                 )}
+
+                <motion.button
+                  className={`${styles.modeCard} ${styles.modeCardRanking}`}
+                  onClick={() => setView('ranking')}
+                  type="button"
+                  whileHover={{ scale: 1.03, y: -4 }}
+                  whileTap={{ scale: 0.97 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <span className={styles.modeIcon}>🥇</span>
+                  <h3 className={styles.modeName}>Clasificación</h3>
+                  <p className={styles.modeDesc}>
+                    Compara tus puntos de Aventura con los mejores entrenadores.
+                  </p>
+                </motion.button>
               </div>
 
               {!user && (
@@ -245,6 +266,16 @@ export default function GamePage() {
               >
                 <div className={styles.viewHeader}>{backToHub}</div>
                 <UserProfileView username={user} />
+              </motion.div>
+            )}
+
+            {view === 'ranking' && (
+              <motion.div key="ranking"
+                initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }}
+              >
+                <div className={styles.viewHeader}>{backToHub}</div>
+                <RankingView currentUsername={user} />
               </motion.div>
             )}
           </AnimatePresence>

@@ -16,11 +16,19 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 
 from database import get_db
-from models.user_db import Achievement, StageAnswerReceipt, User, UserStageProgress, UserStats
-from models.user_schemas import StageAnswerRequest
-from utils.deps import get_current_user
+from models.user_db import (
+    Achievement,
+    StageAnswerReceipt,
+    User,
+    UserAdventureStats,
+    UserStageProgress,
+    UserStats,
+)
+from models.user_schemas import RankingEntry, RankingResponse, StageAnswerRequest
+from utils.deps import get_current_user, get_optional_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -143,10 +151,21 @@ async def stage_answer(
         db.add(stats)
         await db.flush()
 
+    adventure_stats_res = await db.execute(
+        select(UserAdventureStats).filter(UserAdventureStats.user_id == current_user.id)
+    )
+    adventure_stats = adventure_stats_res.scalars().first()
+    if not adventure_stats:
+        adventure_stats = UserAdventureStats(user_id=current_user.id)
+        db.add(adventure_stats)
+        await db.flush()
+
     stats.total_answers += 1
+    adventure_stats.total_answers += 1
     if payload.is_correct:
         stats.correct_answers += 1
         stats.streak += 1
+        adventure_stats.correct_answers += 1
     else:
         stats.streak = 0
 
@@ -157,6 +176,7 @@ async def stage_answer(
     new_achievements: list[str] = []
 
     if attempt_finished:
+        adventure_stats.completed_attempts += 1
         attempt_passed    = sp.correct_count >= STAGE_PASS_THRESHOLD
         final_correct     = sp.correct_count   # guardar antes del reset
 
@@ -225,6 +245,64 @@ async def stage_answer(
     ))
     await db.commit()
     return result
+
+
+@router.get(
+    "/ranking",
+    response_model=RankingResponse,
+    summary="Clasificación global de Aventura",
+)
+async def get_ranking(
+    db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
+):
+    """Devuelve el Top 50 y la posición personal, si la petición incluye un JWT."""
+    ranking_res = await db.execute(
+        select(UserAdventureStats)
+        .options(selectinload(UserAdventureStats.user).selectinload(User.achievements))
+        .filter(UserAdventureStats.completed_attempts > 0)
+    )
+    adventure_stats = ranking_res.scalars().all()
+
+    entries: list[dict] = []
+    for item in adventure_stats:
+        medals = sum(1 for achievement in item.user.achievements if achievement.region_name)
+        accuracy = (
+            round((item.correct_answers / item.total_answers) * 100, 1)
+            if item.total_answers
+            else 0.0
+        )
+        entries.append({
+            "username": item.user.username,
+            "avatar_url": item.user.avatar_url,
+            "points": item.correct_answers,
+            "medals": medals,
+            "accuracy": accuracy,
+            "attempts": item.completed_attempts,
+        })
+
+    entries.sort(
+        key=lambda entry: (
+            -entry["points"],
+            -entry["medals"],
+            -entry["accuracy"],
+            entry["attempts"],
+            entry["username"].casefold(),
+        )
+    )
+    positioned = [RankingEntry(position=index, **entry) for index, entry in enumerate(entries, 1)]
+    personal_entry = None
+    if current_user:
+        personal_entry = next(
+            (entry for entry in positioned if entry.username == current_user.username),
+            None,
+        )
+
+    return RankingResponse(
+        leaders=positioned[:50],
+        current_user=personal_entry,
+        total_players=len(positioned),
+    )
 
 
 @router.get("/regions/progress", summary="Progreso del usuario por regiones")
