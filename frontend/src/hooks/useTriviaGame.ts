@@ -347,9 +347,10 @@ export function useStageGame(
                 () => handleNextRef.current?.(),
                 pending.delay,
             );
-        } catch {
+        } catch (error) {
             setSavingAnswer(false);
-            setSaveError('No se pudo guardar la respuesta. Reintenta para continuar.');
+            const detail = error instanceof Error ? error.message : 'Error desconocido';
+            setSaveError(`No se pudo guardar la respuesta: ${detail}. Reintenta para continuar.`);
         }
     }, [region, typeName]);
 

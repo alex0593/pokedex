@@ -105,7 +105,7 @@ class StageAnswerReceipt(Base):
     response = Column(JSON, nullable=False)
     created_at = Column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
         nullable=False,
     )
 

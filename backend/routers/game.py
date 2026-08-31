@@ -162,7 +162,9 @@ async def stage_answer(
 
         if attempt_passed and not sp.completed:
             sp.completed    = True
-            sp.completed_at = datetime.now(timezone.utc)
+            # La columna existente es TIMESTAMP WITHOUT TIME ZONE. Guardamos UTC
+            # normalizado sin tzinfo para que asyncpg no mezcle datetimes aware/naive.
+            sp.completed_at = datetime.now(timezone.utc).replace(tzinfo=None)
 
             # Comprobar si TODOS los stages de la región están completados
             completed_res = await db.execute(
