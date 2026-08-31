@@ -6,6 +6,7 @@ export interface PokemonSummary {
 }
 
 export interface PokemonDetail extends PokemonSummary {
+  original_name: string;
   stats: {
     base_stat: number;
     name: string;

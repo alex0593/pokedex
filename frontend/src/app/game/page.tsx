@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
@@ -38,6 +38,7 @@ export default function GamePage() {
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [regionsProgress, setRegionsProgress] = useState<RegionProgress[]>([]);
+  const previousUserRef = useRef(user);
 
   // Carga el progreso cuando el usuario inicia sesión
   const loadProgress = useCallback(async () => {
@@ -58,9 +59,12 @@ export default function GamePage() {
 
   // Si el usuario cierra sesión, volver al hub y limpiar progreso
   useEffect(() => {
+    const loggedOut = Boolean(previousUserRef.current && !user);
+    previousUserRef.current = user;
+
     if (!user) {
       setRegionsProgress([]); // eslint-disable-line react-hooks/set-state-in-effect -- sincronización de estado con auth
-      if (view === 'profile' || view === 'stage-game' || view === 'stage-select') {
+      if (loggedOut && (view === 'profile' || view === 'stage-game' || view === 'stage-select')) {
         setView('hub');
       }
     }

@@ -270,8 +270,14 @@ class PokeAPIService:
         )
 
     @classmethod
-    async def get_optimized_quiz(cls, region_name: Optional[str] = None, type_name: Optional[str] = None) -> Dict[str, Any]:
-        """Generates a quiz efficiently using a single list fetch and smart sampling, with optional region and type filtering."""
+    async def get_optimized_quiz(
+        cls,
+        region_name: Optional[str] = None,
+        type_name: Optional[str] = None,
+        excluded_names: Optional[List[str]] = None,
+        target_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Generate a filtered quiz, optionally excluding or forcing its target."""
         pool = []
 
         # 1. Filter by Region if provided
@@ -308,15 +314,40 @@ class PokeAPIService:
                 logger.warning(f"Could not fetch type data for {type_name}: {e}")
                 pass
 
-        # 3. Default Pool if no filters applied or if intersection resulted in too few pokemon
-        if len(pool) < 4:
+        # Sin filtros o sin coincidencias, usar un pool global. Un pool pequeño
+        # sigue siendo válido para el objetivo; los distractores se completan abajo.
+        if not pool:
             data = await cls.get_pokemon_list(limit=500, offset=random.randint(0, 500))
             pool = data['results']
 
-        # Pick 4 random unique pokemon from this pool
-        participants = random.sample(pool, 4)
-        target_summary = participants[0]
-        distractions = [p['name'] for p in participants[1:]]
+        excluded = {name.strip().lower() for name in (excluded_names or []) if name.strip()}
+        normalized_target = target_name.strip().lower() if target_name else None
+
+        if normalized_target:
+            target_summary = {"name": normalized_target}
+        else:
+            eligible_targets = [p for p in pool if p["name"].lower() not in excluded]
+            if not eligible_targets:
+                data = await cls.get_pokemon_list(limit=500, offset=random.randint(0, 500))
+                eligible_targets = [
+                    p for p in data["results"] if p["name"].lower() not in excluded
+                ]
+            if not eligible_targets:
+                raise ValueError("No hay Pokémon disponibles para generar otra pregunta")
+            target_summary = random.choice(eligible_targets)
+
+        target_key = target_summary["name"].lower()
+        distractor_names = {
+            p["name"] for p in pool if p["name"].lower() != target_key
+        }
+        if len(distractor_names) < 3:
+            data = await cls.get_pokemon_list(limit=500, offset=random.randint(0, 500))
+            distractor_names.update(
+                p["name"] for p in data["results"] if p["name"].lower() != target_key
+            )
+        if len(distractor_names) < 3:
+            raise ValueError("No hay suficientes opciones para generar el quiz")
+        distractions = random.sample(sorted(distractor_names), 3)
 
         # Fetch full details for the target only (this is now async and handles translations)
         target = await cls.get_pokemon_by_name_or_id(target_summary['name'])
@@ -434,4 +465,3 @@ class PokeAPIService:
             })
 
         return transformed
-

@@ -303,6 +303,20 @@
   margin-top: auto;
 }
 
+.reportLink {
+  display: inline-block;
+  margin-top: 10px;
+  color: var(--accent-color);
+  letter-spacing: 0.5px;
+  text-decoration: none;
+  opacity: 0.9;
+}
+
+.reportLink:hover {
+  text-decoration: underline;
+  opacity: 1;
+}
+
 /* ══════════════════════════════════════════════
    RESPONSIVE — menú hamburguesa activo en móvil
    ══════════════════════════════════════════════ */

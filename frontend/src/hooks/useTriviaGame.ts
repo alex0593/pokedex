@@ -205,6 +205,12 @@ export function useTriviaGame(): TriviaGameState & TriviaGameActions {
 
 const STAGE_QUESTIONS = 10;
 const STAGE_PASS_THRESHOLD = 7;
+const RETRY_GAP_QUESTIONS = 3;
+
+interface RetryEntry {
+    name: string;
+    eligibleQuestion: number;
+}
 
 interface StageGameState {
     quiz: QuizData | null;
@@ -259,6 +265,9 @@ export function useStageGame(
     const handleGuessRef = useRef<((name: string) => void) | null>(null);
     const handleNextRef  = useRef<(() => Promise<void>) | null>(null);
     const apiResultRef   = useRef<StageAnswerResult | null>(null);
+    const seenNamesRef = useRef<Set<string>>(new Set());
+    const retryQueueRef = useRef<RetryEntry[]>([]);
+    const currentRetryNameRef = useRef<string | null>(null);
     const pendingAnswerRef = useRef<{
         answerId: string;
         isCorrect: boolean;
@@ -303,6 +312,9 @@ export function useStageGame(
         correctRef.current = 0;
         questionNumRef.current = 0;
         apiResultRef.current = null;
+        seenNamesRef.current = new Set();
+        retryQueueRef.current = [];
+        currentRetryNameRef.current = null;
         pendingAnswerRef.current = null;
         setSavingAnswer(false);
         setSaveError(null);
@@ -369,6 +381,20 @@ export function useStageGame(
 
         const isCorrect = name === quizRef.current.target.name;
         const isLast    = questionNumRef.current >= STAGE_QUESTIONS;
+        const targetName = quizRef.current.target.original_name.toLowerCase();
+        seenNamesRef.current.add(targetName);
+
+        if (currentRetryNameRef.current === targetName) {
+            retryQueueRef.current = retryQueueRef.current.filter(
+                entry => entry.name !== targetName,
+            );
+            currentRetryNameRef.current = null;
+        } else if (!isCorrect) {
+            retryQueueRef.current.push({
+                name: targetName,
+                eligibleQuestion: questionNumRef.current + RETRY_GAP_QUESTIONS + 1,
+            });
+        }
 
         if (isCorrect) {
             const newCorrect = correctRef.current + 1;
@@ -417,9 +443,19 @@ export function useStageGame(
 
         // Cargar siguiente pregunta
         try {
-            const q = await fetchQuiz({ region, type: typeName });
+            const nextQuestion = questionNumRef.current + 1;
+            const dueRetry = retryQueueRef.current.find(
+                entry => entry.eligibleQuestion <= nextQuestion,
+            );
+            const q = await fetchQuiz({
+                region,
+                type: typeName,
+                exclude: Array.from(seenNamesRef.current),
+                target: dueRetry?.name,
+            });
             setQuiz(q);
             quizRef.current = q;
+            currentRetryNameRef.current = dueRetry?.name ?? null;
             setRevealed(false);
             revealedRef.current = false;
             setLastSelected(null);

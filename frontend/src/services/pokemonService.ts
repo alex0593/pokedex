@@ -75,10 +75,14 @@ export async function fetchPokemonBatchDetails(names: string[]): Promise<Pokemon
 export async function fetchQuiz(opts?: {
     region?: string;
     type?: string;
+    exclude?: string[];
+    target?: string;
 }): Promise<{ target: PokemonDetail; options: string[] }> {
     const params = new URLSearchParams();
     if (opts?.region) params.append('region', opts.region);
     if (opts?.type)   params.append('type', opts.type);
+    opts?.exclude?.forEach(name => params.append('exclude', name));
+    if (opts?.target) params.append('target', opts.target);
 
     const qs = params.toString();
     const data = await apiClient<{ target: PokemonDetail; options: string[] }>(

@@ -170,6 +170,12 @@ export const PageLayout: React.FC<PageLayoutProps> = ({ children, headerSlot }) 
 
       <footer className={styles.footer}>
         <p>&copy; 2026 POKEDEX &bull; PRO MAX</p>
+        <a
+          className={styles.reportLink}
+          href="mailto:aalopezalv@gmail.com?subject=Reporte%20de%20error%20-%20Pok%C3%A9dex&body=Describe%20el%20error%2C%20la%20p%C3%A1gina%20y%20los%20pasos%20para%20reproducirlo%3A%0A%0A"
+        >
+          Reportar un error
+        </a>
       </footer>
 
       {showBackToTop && (

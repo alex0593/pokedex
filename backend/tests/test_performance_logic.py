@@ -55,3 +55,81 @@ async def test_cache_get_many_preserves_order_and_misses():
 
     assert result == [{"id": 1}, None, {"id": 3}]
     redis.mget.assert_awaited_once_with(["first", "missing", "third"])
+
+
+@pytest.mark.asyncio
+async def test_quiz_excludes_previous_targets():
+    pool = {"results": [{"name": name} for name in ["a", "b", "c", "d", "eevee"]]}
+    detail = {"id": 133, "name": "Eevee", "original_name": "eevee"}
+
+    with (
+        patch.object(PokeAPIService, "get_pokemon_list", AsyncMock(return_value=pool)),
+        patch.object(
+            PokeAPIService,
+            "get_pokemon_by_name_or_id",
+            AsyncMock(return_value=detail),
+        ) as get_detail,
+    ):
+        result = await PokeAPIService.get_optimized_quiz(
+            excluded_names=["a", "b", "c", "d"],
+        )
+
+    get_detail.assert_awaited_once_with("eevee")
+    assert result["target"]["original_name"] == "eevee"
+
+
+@pytest.mark.asyncio
+async def test_quiz_can_force_a_review_target():
+    pool = {"results": [{"name": name} for name in ["a", "b", "c", "d"]]}
+    detail = {"id": 25, "name": "Pikachu", "original_name": "pikachu"}
+
+    with (
+        patch.object(PokeAPIService, "get_pokemon_list", AsyncMock(return_value=pool)),
+        patch.object(
+            PokeAPIService,
+            "get_pokemon_by_name_or_id",
+            AsyncMock(return_value=detail),
+        ) as get_detail,
+    ):
+        await PokeAPIService.get_optimized_quiz(
+            excluded_names=["pikachu"],
+            target_name="Pikachu",
+        )
+
+    get_detail.assert_awaited_once_with("pikachu")
+
+
+@pytest.mark.asyncio
+async def test_quiz_uses_unseen_global_target_after_small_pool_is_exhausted():
+    type_data = {
+        "pokemon": [
+            {"pokemon": {"name": "dratini"}},
+            {"pokemon": {"name": "dragonair"}},
+        ]
+    }
+    global_pool = {
+        "results": [{"name": name} for name in ["dratini", "dragonair", "mew", "ditto"]]
+    }
+
+    async def detail_for(name: str):
+        return {"id": 1, "name": name.capitalize(), "original_name": name}
+
+    with (
+        patch.object(PokeAPIService, "get_generic_detail", AsyncMock(return_value=type_data)),
+        patch.object(
+            PokeAPIService,
+            "get_pokemon_list",
+            AsyncMock(return_value=global_pool),
+        ),
+        patch.object(
+            PokeAPIService,
+            "get_pokemon_by_name_or_id",
+            AsyncMock(side_effect=detail_for),
+        ),
+    ):
+        result = await PokeAPIService.get_optimized_quiz(
+            type_name="dragon",
+            excluded_names=["dratini", "dragonair"],
+        )
+
+    assert result["target"]["original_name"] in {"mew", "ditto"}

@@ -161,12 +161,16 @@ async def get_random_pokemon():
 async def get_quiz(
     region: Optional[str] = Query(None, description="Filtrar por región (ej., 'kanto')"),
     type: Optional[str] = Query(None, description="Filtrar por tipo (ej., 'fire')"),
+    exclude: List[str] = Query([], description="Pokémon que no pueden ser objetivo"),
+    target: Optional[str] = Query(None, description="Objetivo concreto para una pregunta de repaso"),
 ):
     """Generates a quiz optimized to reduce external API calls. Supports optional region and type filters."""
     try:
         return await PokeAPIService.get_optimized_quiz(
             region_name=region,
             type_name=type,
+            excluded_names=exclude,
+            target_name=target,
         )
     except (httpx.HTTPError, httpx.TimeoutException, ValueError) as e:
         logger.error(f"Error generating quiz: {e}", exc_info=True)

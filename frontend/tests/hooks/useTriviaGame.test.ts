@@ -4,7 +4,7 @@ import { useTriviaGame } from '../../src/hooks/useTriviaGame';
 
 vi.mock('../../src/services/pokemonService', () => ({
   fetchQuiz: vi.fn().mockResolvedValue({
-    target: { id: 25, name: 'Pikachu', image: 'url' },
+    target: { id: 25, name: 'Pikachu', original_name: 'pikachu', image: 'url' },
     options: ['Pikachu', 'Raichu', 'Charmander', 'Squirtle'],
   }),
 }));

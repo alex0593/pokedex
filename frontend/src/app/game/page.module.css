@@ -236,22 +236,34 @@
     margin-bottom: 20px;
 }
 
-/* Botón volver: flat text con flecha */
+/* Botón volver: sólido y con contraste alto */
 .hubBackBtn {
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: rgba(255, 255, 255, 0.70);
-    padding: 8px 18px;
+    background: #f8fafc;
+    border: 2px solid #ffffff;
+    color: #111827;
+    min-height: 44px;
+    padding: 9px 20px;
     border-radius: 50px;
-    font-size: 0.85rem;
-    font-weight: 700;
+    font-size: 0.9rem;
+    font-weight: 800;
     cursor: pointer;
-    transition: all 0.2s ease;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .hubBackBtn:hover {
-    background: rgba(255, 255, 255, 0.12);
-    color: #ffffff;
+    background: #ffffff;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+    transform: translateY(-1px);
+}
+
+.hubBackBtn:active {
+    transform: translateY(0);
+}
+
+.hubBackBtn:focus-visible {
+    outline: 3px solid #facc15;
+    outline-offset: 3px;
 }
 
 @media (max-width: 768px) {
@@ -311,7 +323,8 @@
     }
 
     .hubBackBtn {
-        padding: 7px 14px;
-        font-size: 0.82rem;
+        min-height: 44px;
+        padding: 9px 16px;
+        font-size: 0.85rem;
     }
 }

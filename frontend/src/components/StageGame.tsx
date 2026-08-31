@@ -171,7 +171,7 @@ export const StageGame: React.FC<StageGameProps> = ({
       {/* ── Cabecera del stage ── */}
       <div className={styles.stageHeader}>
         <button className={styles.backBtnSmall} onClick={onBack} type="button">
-          ←
+          ← Stages
         </button>
         <div className={styles.stageBreadcrumb}>
           <span className={styles.regionLabel}>{REGION_LABELS[region] ?? region}</span>
