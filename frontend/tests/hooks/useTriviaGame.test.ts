@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { useTriviaGame } from '../../src/hooks/useTriviaGame';
 
 vi.mock('../../src/services/pokemonService', () => ({
@@ -10,24 +10,22 @@ vi.mock('../../src/services/pokemonService', () => ({
 }));
 
 vi.mock('../../src/services/authService', () => ({
-  getLoggedUser: vi.fn().mockReturnValue(null),
-  saveGameResult: vi.fn(),
+    getLoggedUser: vi.fn().mockReturnValue(null),
+    getLoggedToken: vi.fn().mockReturnValue(null),
+    saveGameResult: vi.fn(),
+    saveStageAnswer: vi.fn(),
 }));
 
 describe('useTriviaGame', () => {
   beforeEach(() => {
     localStorage.clear();
-    vi.clearAllTimers();
-    vi.useFakeTimers();
+    vi.useRealTimers();
   });
 
   it('should initialize game state', async () => {
     const { result } = renderHook(() => useTriviaGame());
 
-    await act(async () => {
-      // Wait for async initialization
-      await new Promise(resolve => setTimeout(resolve, 0));
-    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current.loading).toBe(false);
     expect(result.current.quiz).toBeTruthy();
@@ -38,9 +36,7 @@ describe('useTriviaGame', () => {
   it('should handle correct guess', async () => {
     const { result } = renderHook(() => useTriviaGame());
 
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
-    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {
       result.current.handleGuess('Pikachu');
@@ -54,9 +50,7 @@ describe('useTriviaGame', () => {
   it('should reset score on incorrect guess', async () => {
     const { result } = renderHook(() => useTriviaGame());
 
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
-    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {
       result.current.handleGuess('Charmander');
@@ -70,9 +64,7 @@ describe('useTriviaGame', () => {
   it('should persist high score to localStorage', async () => {
     const { result } = renderHook(() => useTriviaGame());
 
-    await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0));
-    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {
       result.current.handleGuess('Pikachu');

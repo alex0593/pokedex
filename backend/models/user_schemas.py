@@ -1,4 +1,5 @@
 from typing import List, Literal, Optional
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
@@ -61,6 +62,13 @@ class StageAnswerRequest(BaseModel):
     region: str
     type_name: str
     is_correct: bool
+    answer_id: UUID
+
+
+class GameResultRequest(BaseModel):
+    """Resultado de una pregunta del modo libre para el usuario autenticado."""
+    correct: bool
+    score: int
 
 
 class StageProgressSchema(BaseModel):

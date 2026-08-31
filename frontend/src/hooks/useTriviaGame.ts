@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchQuiz } from '../services/pokemonService';
-import { saveGameResult, getLoggedUser, saveStageAnswer, getLoggedToken } from '../services/authService';
+import { saveGameResult, saveStageAnswer, getLoggedToken } from '../services/authService';
 import { PokemonDetail } from '../types/pokemon';
 import type { StageAnswerResult } from '../types/game';
 
@@ -130,8 +130,8 @@ export function useTriviaGame(): TriviaGameState & TriviaGameActions {
 
             setMessage(`¡Excelente! Es ${currentQuiz.target.name.toUpperCase()}`);
 
-            const username = getLoggedUser();
-            if (username) saveGameResult(username, true, newScore);
+            const token = getLoggedToken();
+            if (token) saveGameResult(token, true, newScore).catch(() => undefined);
 
             autoNextRef.current = setTimeout(() => handleNextRef.current?.(), 1800);
         } else {
@@ -144,8 +144,8 @@ export function useTriviaGame(): TriviaGameState & TriviaGameActions {
                 setMessage(`¡Incorrecto! Era ${currentQuiz.target.name.toUpperCase()}`);
             }
 
-            const username = getLoggedUser();
-            if (username) saveGameResult(username, false, 0);
+            const token = getLoggedToken();
+            if (token) saveGameResult(token, false, 0).catch(() => undefined);
 
             autoNextRef.current = setTimeout(() => handleNextRef.current?.(), 3000);
         }
@@ -219,12 +219,15 @@ interface StageGameState {
     attemptPassed: boolean;    // si el último intento fue aprobado
     regionCompleted: boolean;  // si la región entera quedó conquistada
     newAchievements: string[]; // logros nuevos ganados
+    savingAnswer: boolean;
+    saveError: string | null;
 }
 
 interface StageGameActions {
     handleGuess: (name: string) => void;
     handleNext: () => Promise<void>;
     initStage: () => Promise<void>;
+    retrySave: () => Promise<void>;
 }
 
 export function useStageGame(
@@ -243,6 +246,8 @@ export function useStageGame(
     const [attemptPassed, setAttemptPassed] = useState(false);
     const [regionCompleted, setRegionCompleted] = useState(false);
     const [newAchievements, setNewAchievements] = useState<string[]>([]);
+    const [savingAnswer, setSavingAnswer] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
 
     // Refs
     const quizRef        = useRef<QuizData | null>(null);
@@ -254,6 +259,12 @@ export function useStageGame(
     const handleGuessRef = useRef<((name: string) => void) | null>(null);
     const handleNextRef  = useRef<(() => Promise<void>) | null>(null);
     const apiResultRef   = useRef<StageAnswerResult | null>(null);
+    const pendingAnswerRef = useRef<{
+        answerId: string;
+        isCorrect: boolean;
+        isLast: boolean;
+        delay: number;
+    } | null>(null);
 
     useEffect(() => { quizRef.current = quiz; }, [quiz]);
     useEffect(() => { revealedRef.current = revealed; }, [revealed]);
@@ -292,6 +303,9 @@ export function useStageGame(
         correctRef.current = 0;
         questionNumRef.current = 0;
         apiResultRef.current = null;
+        pendingAnswerRef.current = null;
+        setSavingAnswer(false);
+        setSaveError(null);
         stopAllTimers();
 
         try {
@@ -310,6 +324,38 @@ export function useStageGame(
             setLoading(false);
         }
     }, [region, typeName, stopAllTimers, startTimer]);
+
+    const persistPendingAnswer = useCallback(async () => {
+        const pending = pendingAnswerRef.current;
+        const token = getLoggedToken();
+        if (!pending || !token) return;
+
+        setSavingAnswer(true);
+        setSaveError(null);
+        try {
+            const res = await saveStageAnswer(
+                token,
+                region,
+                typeName,
+                pending.isCorrect,
+                pending.answerId,
+            );
+            if (pending.isLast) apiResultRef.current = res;
+            pendingAnswerRef.current = null;
+            setSavingAnswer(false);
+            autoNextRef.current = setTimeout(
+                () => handleNextRef.current?.(),
+                pending.delay,
+            );
+        } catch {
+            setSavingAnswer(false);
+            setSaveError('No se pudo guardar la respuesta. Reintenta para continuar.');
+        }
+    }, [region, typeName]);
+
+    const retrySave = useCallback(async () => {
+        await persistPendingAnswer();
+    }, [persistPendingAnswer]);
 
     const handleGuess = useCallback((name: string) => {
         if (revealedRef.current) return;
@@ -336,19 +382,23 @@ export function useStageGame(
             );
         }
 
-        // Enviar al backend (fire-and-forget, guardar resultado en la última pregunta)
+        const delay = isCorrect ? 1800 : 3000;
         const token = getLoggedToken();
         if (token) {
-            saveStageAnswer(token, region, typeName, isCorrect)
-                .then(res => { if (isLast) apiResultRef.current = res; })
-                .catch(() => { });
+            pendingAnswerRef.current = {
+                answerId: crypto.randomUUID(),
+                isCorrect,
+                isLast,
+                delay,
+            };
+            void persistPendingAnswer();
+        } else {
+            autoNextRef.current = setTimeout(() => handleNextRef.current?.(), delay);
         }
-
-        const delay = isCorrect ? 1800 : 3000;
-        autoNextRef.current = setTimeout(() => handleNextRef.current?.(), delay);
-    }, [stopAllTimers, region, typeName]);
+    }, [stopAllTimers, persistPendingAnswer]);
 
     const handleNext = useCallback(async () => {
+        if (savingAnswer || pendingAnswerRef.current) return;
         stopAllTimers();
 
         if (questionNumRef.current >= STAGE_QUESTIONS) {
@@ -383,7 +433,7 @@ export function useStageGame(
             // Si falla la carga, igual avanzar al resultado
             setFinished(true);
         }
-    }, [stopAllTimers, region, typeName, startTimer]);
+    }, [savingAnswer, stopAllTimers, region, typeName, startTimer]);
 
     // Mantener refs circulares actualizadas
     useEffect(() => { handleGuessRef.current = handleGuess; });
@@ -399,6 +449,7 @@ export function useStageGame(
         quiz, revealed, questionNumber, correctCount,
         loading, message, lastSelected, timeLeft,
         finished, attemptPassed, regionCompleted, newAchievements,
-        handleGuess, handleNext, initStage,
+        savingAnswer, saveError,
+        handleGuess, handleNext, initStage, retrySave,
     };
 }

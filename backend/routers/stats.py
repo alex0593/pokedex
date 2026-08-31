@@ -1,39 +1,41 @@
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from database import get_db
 from models.user_db import Achievement, User, UserStats
+from models.user_schemas import GameResultRequest
+from utils.deps import get_current_user
 
 router = APIRouter(prefix="/game", tags=["Game Stats"])
 
 @router.post("/save-result")
 async def save_result(
-    username: str,
-    correct: bool,
-    score: int,
-    db: AsyncSession = Depends(get_db)
+    payload: GameResultRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    result = await db.execute(select(User).filter(User.username == username))
-    user = result.scalars().first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
     # Get stats
-    stats_result = await db.execute(select(UserStats).filter(UserStats.user_id == user.id))
+    stats_result = await db.execute(
+        select(UserStats).filter(UserStats.user_id == current_user.id)
+    )
     stats = stats_result.scalars().first()
+    if not stats:
+        stats = UserStats(user_id=current_user.id)
+        db.add(stats)
+        await db.flush()
 
     # Update base stats
     stats.total_answers += 1
-    if correct:
+    if payload.correct:
         stats.correct_answers += 1
         stats.streak += 1
     else:
         stats.streak = 0
 
-    if score > stats.high_score:
-        stats.high_score = score
+    if payload.score > stats.high_score:
+        stats.high_score = payload.score
 
     # Check for achievements based on streak or score or total correct
     # Example achievements
@@ -62,8 +64,8 @@ async def save_result(
                 db.add(db_ach)
                 await db.flush()
 
-            if db_ach not in user.achievements:
-                user.achievements.append(db_ach)
+            if db_ach not in current_user.achievements:
+                current_user.achievements.append(db_ach)
                 new_achievements.append(db_ach.name)
 
     await db.commit()

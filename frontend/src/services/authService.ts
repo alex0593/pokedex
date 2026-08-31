@@ -92,24 +92,17 @@ export async function getProfile(username: string): Promise<UserProfile> {
     }
 }
 
-export async function saveGameResult(username: string, correct: boolean, score: number): Promise<unknown> {
-    try {
-        const response = await fetch(
-            `/api/game/save-result?username=${username}&correct=${correct}&score=${score}`,
-            { method: 'POST' }
-        );
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Save result server error:', errorText);
-            throw new Error(`Server responded with ${response.status}: ${errorText}`);
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error('Save game result fetch failed:', error);
-        throw error;
-    }
+export async function saveGameResult(
+    token: string,
+    correct: boolean,
+    score: number,
+): Promise<unknown> {
+    return apiClient('/game/save-result', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: { correct, score },
+        retries: 0,
+    });
 }
 
 export function logout(): void {
@@ -139,11 +132,13 @@ export async function saveStageAnswer(
     region: string,
     typeName: string,
     isCorrect: boolean,
+    answerId: string,
 ): Promise<StageAnswerResult> {
     return apiClient<StageAnswerResult>('/game/stage/answer', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
-        body: { region, type_name: typeName, is_correct: isCorrect },
+        body: { region, type_name: typeName, is_correct: isCorrect, answer_id: answerId },
+        retries: 0,
     });
 }
 

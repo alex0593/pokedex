@@ -1,6 +1,16 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Table, UniqueConstraint
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Table,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -81,6 +91,26 @@ class UserStageProgress(Base):
 
     __table_args__ = (
         UniqueConstraint("user_id", "region_name", "type_name", name="uq_user_stage_progress"),
+    )
+
+
+class StageAnswerReceipt(Base):
+    """Respuesta ya procesada para hacer seguro cualquier reintento HTTP."""
+
+    __tablename__ = "stage_answer_receipts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    answer_id = Column(String(36), nullable=False)
+    response = Column(JSON, nullable=False)
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "answer_id", name="uq_stage_answer_receipt"),
     )
 
 

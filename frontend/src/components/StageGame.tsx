@@ -39,7 +39,8 @@ export const StageGame: React.FC<StageGameProps> = ({
     quiz, revealed, questionNumber, correctCount,
     loading, message, lastSelected, timeLeft,
     finished, attemptPassed, regionCompleted, newAchievements,
-    handleGuess, handleNext, initStage,
+    savingAnswer, saveError,
+    handleGuess, handleNext, initStage, retrySave,
   } = useStageGame(region, typeName);
 
   const typeColor = getTypeBgColor(typeName);
@@ -264,7 +265,20 @@ export const StageGame: React.FC<StageGameProps> = ({
           ))}
         </div>
 
-        {revealed && (
+        {revealed && savingAnswer && (
+          <div className={styles.nextHint} role="status">Guardando respuesta...</div>
+        )}
+
+        {revealed && saveError && (
+          <div className={styles.nextHint} role="alert">
+            <span>{saveError}</span>
+            <button onClick={retrySave} className={styles.nextBtn} type="button">
+              Reintentar guardado
+            </button>
+          </div>
+        )}
+
+        {revealed && !savingAnswer && !saveError && (
           <div className={styles.nextHint}>
             <button onClick={handleNext} className={styles.nextBtn} type="button">
               {questionNumber >= 10 ? 'Ver Resultado ➜' : 'Siguiente ➔'}

@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from database import get_db
-from models.user_db import Achievement, User, UserStageProgress, UserStats
+from models.user_db import Achievement, StageAnswerReceipt, User, UserStageProgress, UserStats
 from models.user_schemas import StageAnswerRequest
 from utils.deps import get_current_user
 
@@ -92,6 +92,7 @@ async def stage_answer(
     """
     region    = payload.region.lower().strip()
     type_name = payload.type_name.lower().strip()
+    answer_id = str(payload.answer_id)
 
     if region not in REGION_STAGES:
         raise HTTPException(status_code=400, detail=f"Región '{region}' no válida.")
@@ -100,6 +101,16 @@ async def stage_answer(
             status_code=400,
             detail=f"Tipo '{type_name}' no existe como stage en la región '{region}'.",
         )
+
+    receipt_res = await db.execute(
+        select(StageAnswerReceipt).filter(
+            StageAnswerReceipt.user_id == current_user.id,
+            StageAnswerReceipt.answer_id == answer_id,
+        )
+    )
+    existing_receipt = receipt_res.scalars().first()
+    if existing_receipt:
+        return existing_receipt.response
 
     # ── Obtener o crear el progreso del stage ──────────────────────────────
     sp_res = await db.execute(
@@ -197,9 +208,7 @@ async def stage_answer(
     else:
         final_correct = sp.correct_count
 
-    await db.commit()
-
-    return {
+    result = {
         "stage_progress": _stage_to_dict(sp),
         "attempt_finished":      attempt_finished,
         "attempt_passed":        attempt_passed,
@@ -207,6 +216,13 @@ async def stage_answer(
         "region_completed":      region_completed,
         "new_achievements":      new_achievements,
     }
+    db.add(StageAnswerReceipt(
+        user_id=current_user.id,
+        answer_id=answer_id,
+        response=result,
+    ))
+    await db.commit()
+    return result
 
 
 @router.get("/regions/progress", summary="Progreso del usuario por regiones")

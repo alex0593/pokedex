@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { AuthProvider, useAuth } from '../../src/contexts/AuthContext';
 
 vi.mock('../../src/services/authService', () => ({
@@ -53,11 +53,10 @@ describe('AuthContext', () => {
       </AuthProvider>
     );
 
-    const loginButton = screen.getByText('Login');
-    loginButton.click();
+    fireEvent.click(screen.getByText('Login'));
 
     await waitFor(() => {
-      expect(localStorage.getItem('poke_token')).toBeTruthy();
+      expect(screen.getByText('User: test')).toBeInTheDocument();
     });
   });
 });
