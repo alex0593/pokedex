@@ -53,6 +53,11 @@ services:
           type: web
           name: pokedex-backend
           envVarKey: RENDER_EXTERNAL_URL
+      - key: NEXT_PUBLIC_BACKEND_URL
+        fromService:
+          type: web
+          name: pokedex-backend
+          envVarKey: RENDER_EXTERNAL_URL
 
 databases:
   - name: pokedex-db

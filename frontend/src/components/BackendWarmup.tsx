@@ -8,10 +8,13 @@ import { useEffect } from 'react';
  */
 export function BackendWarmup() {
   useEffect(() => {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    if (!backendUrl) return;
+
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => controller.abort(), 45_000);
 
-    void fetch('/api/health', {
+    void fetch(new URL('/health', backendUrl), {
       cache: 'no-store',
       signal: controller.signal,
     })
