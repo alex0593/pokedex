@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Outfit, Fira_Code } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../contexts/AuthContext";
 import { FavoritesProvider } from "../contexts/FavoritesContext";
+import { BackendWarmup } from "../components/BackendWarmup";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -56,6 +57,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://raw.githubusercontent.com" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} ${firaCode.variable}`}>
+        <BackendWarmup />
         <AuthProvider>
           <FavoritesProvider>
             {children}
